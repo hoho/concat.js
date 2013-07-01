@@ -31,7 +31,7 @@ Chainable DOM Builder
         .end()
     .end();
 
-**Will append to `<body>` tag the following:**
+**Will append the following to `<body>` tag:**
 
     <div class="ololo" style="background-color: red; height: 100px;"></div>
     <span style="border: 1px solid green;">0.08111037290655077</span>
