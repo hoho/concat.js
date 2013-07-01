@@ -1,6 +1,6 @@
 /*!
  * Concat.JS — v0.0.1 — 2013-07-01
- * https://github.com/hoho/concatjs
+ * https://github.com/hoho/concat.js
  *
  * Copyright (c) 2013 Marat Abdullin
  * Released under the MIT license
