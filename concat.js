@@ -19,7 +19,6 @@
                 // $ — $(P) cache (cached after first proxied to jQuery fn call).
                 this._cur = {
                     P: parent,
-                    R: 1,
                     _: []
                 };
 
@@ -33,7 +32,7 @@
                 if ($.isFunction(item.R)) {
                     R = item.R;
                 } else {
-                    i = item.R;
+                    i = item.R === undefined ? 1 : item.R;
                     R = function() {
                         return --i >= 0;
                     };
@@ -41,6 +40,8 @@
 
                 while (R()) {
                     item.$ = null;
+
+                    if (item.R !== undefined) { item.P = item.A.P; }
 
                     item.F && item.F();
 
@@ -58,7 +59,6 @@
                         cur = this._cur,
                         item = {
                             A: this._cur,
-                            R: 1,
                             _: [],
                             F: function() {
                                 if (!cur.$) { cur.$ = $(cur.P); }
@@ -76,7 +76,6 @@
 
     proto.repeat = function(num) {
         var item = {
-            P: this._cur.P,
             A: this._cur,
             R: num,
             _: []
@@ -100,11 +99,9 @@
 
     proto.elem = function(name) {
         var item = {
-                P: null,
-                A: this._cur,
-                R: 1,
-                _: []
-            };
+            A: this._cur,
+            _: []
+        };
 
         item.F = function() {
             item.P = document.createElement(name);
@@ -125,4 +122,3 @@
         return new constr(parent instanceof $ ? parent[0] : parent);
     };
 })(jQuery);
-

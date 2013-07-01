@@ -14,6 +14,13 @@ Chainable DOM Builder
             .attr('class', 'ololo')
             .css({'background-color': 'red', 'height': '100px'})
             .on('click', function() { alert(123); })
+            .elem('ul')
+                .repeat(2)
+                    .elem('li')
+                        .text('aaa')
+                    .end()
+                .end()
+            .end()
         .end()
         .repeat(3)
             .elem('span')
@@ -33,10 +40,15 @@ Chainable DOM Builder
 
 **Will append the following to `<body>` tag:**
 
-    <div class="ololo" style="background-color: red; height: 100px;"></div>
+    <div class="ololo" style="background-color: red; height: 100px;">
+        <ul>
+            <li>aaa</li>
+            <li>aaa</li>
+        </ul>
+    </div>
     <span style="border: 1px solid green;">0.08111037290655077</span>
     <span style="border: 1px solid green;">0.08079393371008337</span>
-    <span style="border: 1px solid green; ">0.906995284371078</span>
+    <span style="border: 1px solid green;">0.906995284371078</span>
     <p>1</p>
     <p>2</p>
     <p>3</p>
