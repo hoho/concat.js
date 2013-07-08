@@ -1,40 +1,50 @@
-Concat.JS
+concat.js
 =========
 
 Chainable DOM Builder
-
-*Requires jQuery.*
 
 **Usage example:**
 
     var tmp = 0;
 
     $C(document.body)
-        .elem('div')
-            .attr('class', 'ololo')
-            .css({'background-color': 'red', 'height': '100px'})
-            .on('click', function() { alert(123); })
-            .elem('ul')
+        .div({'class': 'ololo', 'style': 'background-color: red; height: 100px;'})
+            .do(function() { this.addEventListener('click', function() { alert(5555); }); })
+            .ul()
                 .repeat(2)
-                    .elem('li')
+                    .li()
                         .text('aaa')
                     .end()
                 .end()
             .end()
         .end()
         .repeat(3)
-            .elem('span')
-                .css('border', '1px solid green')
-                .text(function() { return Math.random(); })
+            .span({'style': 'border: 1px solid green;'})
+                .text(function(index) { return index + ' ' + Math.random(); })
             .end()
         .end()
         .repeat(function() { return ++tmp <= 5; })
-            .elem('p')
-                .text(function() { return tmp; })
+            .p()
+                .text(function(index) { return index + ' ' + tmp; })
             .end()
         .end()
-        .elem('div')
+        .div()
             .text('hello')
+            .do(function() { this.innerHTML += '<br>'; })
+            .text('world')
+        .end()
+        .each([9, 8, 7])
+            .p()
+                .text(function(index, item) { return index + ' ' + item; })
+                .repeat(2)
+                    .div()
+                        .text(function(index) { return index; })
+                    .end()
+                .end()
+                .div()
+                    .text(function(index, item) { return index + ' ' + item; })
+                .end()
+            .end()
         .end()
     .end();
 
@@ -46,14 +56,36 @@ Chainable DOM Builder
             <li>aaa</li>
         </ul>
     </div>
-    <span style="border: 1px solid green;">0.08111037290655077</span>
-    <span style="border: 1px solid green;">0.08079393371008337</span>
-    <span style="border: 1px solid green;">0.906995284371078</span>
-    <p>1</p>
-    <p>2</p>
-    <p>3</p>
-    <p>4</p>
-    <p>5</p>
-    <div>hello</div>
+    <span style="border: 1px solid green;">0 0.3901003133505583</span>
+    <span style="border: 1px solid green;">1 0.19187432969920337</span>
+    <span style="border: 1px solid green;">2 0.0640524192713201</span>
+    <p>0 1</p>
+    <p>1 2</p>
+    <p>2 3</p>
+    <p>3 4</p>
+    <p>4 5</p>
+    <div>
+        hello
+        <br>
+        world
+    </div>
+    <p>
+        0 9
+        <div>0</div>
+        <div>1</div>
+        <div>0 9</div>
+    </p>
+    <p>
+        1 8
+        <div>0</div>
+        <div>1</div>
+        <div>1 8</div>
+    </p>
+    <p>
+        2 7
+        <div>0</div>
+        <div>1</div>
+        <div>2 7</div>
+    </p>
 
 **First `<div>` will have 'click' event handler.**

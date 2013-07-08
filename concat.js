@@ -1,24 +1,32 @@
 /*!
- * Concat.JS — v0.0.1 — 2013-07-01
+ * Concat.JS — v0.0.2 — 2013-07-01
  * https://github.com/hoho/concat.js
  *
  * Copyright (c) 2013 Marat Abdullin
  * Released under the MIT license
  */
-(function($) {
-    var proxyfn = ['attr', 'css', 'text', 'html', 'on'],
+(function() {
+    var tags = 'div|span|p|a|ul|ol|li|table|tr|td|th|br|img|b|i|s|u'.split('|'),
         proto = {},
+        i,
+        curArgs, eachArray,
+        isFunction =
+            function(func) {
+                return typeof func === 'function';
+            },
 
         constr =
             function(parent) {
+                // D — node to append the result to (if any).
                 // P — item's parent node.
                 // A — item's parent item.
                 // F — a function to call before processing subitems.
                 // R — how many times to repeat this item.
+                // E — an array for each().
                 // _ — subitems.
-                // $ — $(P) cache (cached after first proxied to jQuery fn call).
                 this._cur = {
-                    P: parent,
+                    D: parent,
+                    P: document.createDocumentFragment(),
                     _: []
                 };
 
@@ -27,61 +35,77 @@
 
         run =
             function(item) {
-                var R, i;
+                var R, i = 0, j, oldArgs = curArgs, oldEachArray = eachArray;
 
-                if ($.isFunction(item.R)) {
-                    R = item.R;
-                } else {
-                    i = item.R === undefined ? 1 : item.R;
+                if (item.E) {
+                    curArgs = [-1, null];
+                    eachArray = item.E;
+
                     R = function() {
-                        return --i >= 0;
+                        j = ++curArgs[0];
+                        curArgs[1] = eachArray[j];
+                        return j < eachArray.length;
                     };
+                } else if (item.R) {
+                    curArgs = [-1];
+                    eachArray = undefined;
+
+                    R = isFunction(item.R) ?
+                        function() {
+                            return item.R.call(item.A.P, 1 + curArgs[0]++);
+                        }
+                        :
+                        function() {
+                            return curArgs[0]++ < item.R - 1;
+                        };
+                } else {
+                    i = 1;
                 }
 
-                while (R()) {
-                    item.$ = null;
-
-                    if (item.R !== undefined) { item.P = item.A.P; }
+                while ((!R && i--) || (R && R())) {
+                    if (R) { item.P = item.A.P; }
 
                     item.F && item.F();
 
-                    for (var j = 0; j < item._.length; j++) {
+                    for (j = 0; j < item._.length; j++) {
                         run(item._[j]);
                     }
                 }
+
+                curArgs = oldArgs;
+                eachArray = oldEachArray;
             },
 
-        proxy =
-            function(fn) {
-                // Proxy jQuery function call.
-                return function() {
-                    var args = arguments,
-                        cur = this._cur,
-                        item = {
-                            A: this._cur,
-                            _: [],
-                            F: function() {
-                                if (!cur.$) { cur.$ = $(cur.P); }
-                                cur.$[fn].apply(cur.$, args);
-                            }
-                        };
-
-                    this._cur._.push(item);
-
-                    return this;
+        Item =
+            function(self, func) {
+                var ret = {
+                    A: self._cur,
+                    F: func,
+                    _: []
                 };
+
+                self._cur._.push(ret);
+
+                return ret;
             };
 
     constr.prototype = proto;
 
     proto.repeat = function(num) {
-        var item = {
-            A: this._cur,
-            R: num,
-            _: []
-        };
+        var item = Item(this);
 
-        this._cur._.push(item);
+        item.R = num;
+
+        this._cur = item;
+
+        return this;
+    };
+
+    proto.each = function(arr) {
+        var item = Item(this);
+
+        item.E = arr;
+
         this._cur = item;
 
         return this;
@@ -92,33 +116,72 @@
             return this;
         }
 
-        run(this._[0]);
+        var r = this._[0];
 
-        this._cur = this._ = null;
+        run(r);
+
+        if (r.D) {
+            r.D.appendChild(r.P);
+        } else {
+            return r.P;
+        }
     };
 
-    proto.elem = function(name) {
-        var item = {
-            A: this._cur,
-            _: []
-        };
+    proto.elem = function(name, attr) {
+        var item = Item(this, function() {
+            var e = item.P = document.createElement(name),
+                a;
 
-        item.F = function() {
-            item.P = document.createElement(name);
-            item.A.P.appendChild(item.P);
-        };
+            for (i in attr) {
+                a = attr[i];
 
-        this._cur._.push(item);
+                if (isFunction(a)) { a = a.apply(item.P, curArgs); }
+
+                if (i === 'style') {
+                    e.style.cssText = a;
+                } else {
+                    e.setAttribute(i, a);
+                }
+            }
+
+            item.A.P.appendChild(e);
+        });
+
         this._cur = item;
 
         return this;
     };
 
-    for (var i = 0; i < proxyfn.length; i++) {
-        proto[proxyfn[i]] = proxy(proxyfn[i]);
+    // Shortcuts for popular tags, to use .div() instead of .elem('div').
+    for (i = 0; i < tags.length; i++) {
+        proto[tags[i]] = (function(name) {
+            return function(attr) {
+                return this.elem(name, attr);
+            };
+        })(tags[i]);
     }
 
-    window.$C = function(parent) {
-        return new constr(parent instanceof $ ? parent[0] : parent);
+    proto.text = function(text) {
+        var item = Item(this, function() {
+            item.A.P.appendChild(
+                document.createTextNode(
+                    isFunction(text) ? text.apply(item.A.P, curArgs) : text
+                )
+            );
+        });
+
+        return this;
     };
-})(jQuery);
+
+    proto.do = function(func) {
+        var item = Item(this, function() {
+            func.apply(item.A.P, curArgs);
+        });
+
+        return this;
+    };
+
+    window.$C = function(parent) {
+        return new constr(parent);
+    };
+})();
