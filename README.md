@@ -14,10 +14,7 @@ Chainable DOM Builder
                 .repeat(2)
                     .li()
                         .text('aaa')
-                    .end()
-                .end()
-            .end()
-        .end()
+        .end(4)
         .repeat(3)
             .span({'style': 'border: 1px solid green;'})
                 .text(function(index) { return index + ' ' + Math.random(); })
@@ -43,9 +40,7 @@ Chainable DOM Builder
                 .end()
                 .div()
                     .text(function(index, item) { return index + ' ' + item; })
-                .end()
-            .end()
-        .end()
+        .end(3)
     .end();
 
 **Will append the following to `<body>` tag:**
