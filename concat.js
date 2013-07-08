@@ -111,10 +111,14 @@
         return this;
     };
 
-    proto.end = function() {
-        if (this._cur = this._cur.A) {
-            return this;
+    proto.end = function(num) {
+        if (num === undefined) { num = 1; }
+
+        while (num > 0 && (this._cur = this._cur.A)) {
+            num--;
         }
+
+        if (this._cur) { return this; }
 
         var r = this._[0];
 
