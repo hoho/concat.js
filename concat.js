@@ -5,7 +5,7 @@
  * Copyright (c) 2013 Marat Abdullin
  * Released under the MIT license
  */
-(function(undefined) {
+(function(document, undefined) {
     var tags = 'div|span|p|a|ul|ol|li|table|tr|td|th|br|img|b|i|s|u'.split('|'),
         proto = {},
         i,
@@ -157,7 +157,9 @@
                             a = val.join('; ');
                         }
 
-                        e.style.cssText = a;
+                        if (a) {
+                            e.style.cssText = a;
+                        }
                     } else {
                         e.setAttribute(i, a);
                     }
@@ -204,4 +206,4 @@
     window.$C = function(parent) {
         return new constr(parent);
     };
-})();
+})(document);
