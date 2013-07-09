@@ -1,11 +1,11 @@
 /*!
- * concat.js — v0.0.2 — 2013-07-09
+ * concat.js — v0.0.3 — 2013-07-09
  * https://github.com/hoho/concat.js
  *
  * Copyright (c) 2013 Marat Abdullin
  * Released under the MIT license
  */
-(function() {
+(function(undefined) {
     var tags = 'div|span|p|a|ul|ol|li|table|tr|td|th|br|img|b|i|s|u'.split('|'),
         proto = {},
         i,
@@ -24,20 +24,18 @@
                 // R — how many times to repeat this item.
                 // E — an array for each().
                 // _ — subitems.
-                this._cur = {
+                this._ = [this._c = {
                     D: parent,
                     P: document.createDocumentFragment(),
                     _: []
-                };
-
-                this._ = [this._cur];
+                }];
             },
 
         run =
             function(item) {
-                var R, i = 0, j, oldArgs = curArgs, oldEachArray = eachArray;
+                var R, i, j, oldArgs = curArgs, oldEachArray = eachArray;
 
-                if (item.E) {
+                if (item.E !== undefined) {
                     curArgs = [-1, null];
                     eachArray = item.E;
 
@@ -46,7 +44,7 @@
                         curArgs[1] = eachArray[j];
                         return j < eachArray.length;
                     };
-                } else if (item.R) {
+                } else if (item.R !== undefined) {
                     curArgs = [-1];
                     eachArray = undefined;
 
@@ -79,12 +77,12 @@
         Item =
             function(self, func) {
                 var ret = {
-                    A: self._cur,
+                    A: self._c,
                     F: func,
                     _: []
                 };
 
-                self._cur._.push(ret);
+                self._c._.push(ret);
 
                 return ret;
             };
@@ -96,7 +94,7 @@
 
         item.R = num;
 
-        this._cur = item;
+        this._c = item;
 
         return this;
     };
@@ -106,7 +104,7 @@
 
         item.E = arr;
 
-        this._cur = item;
+        this._c = item;
 
         return this;
     };
@@ -114,11 +112,11 @@
     proto.end = function(num) {
         if (num === undefined) { num = 1; }
 
-        while (num > 0 && (this._cur = this._cur.A)) {
+        while (num > 0 && (this._c = this._c.A)) {
             num--;
         }
 
-        if (this._cur) { return this; }
+        if (this._c) { return this; }
 
         var r = this._[0];
 
@@ -134,24 +132,42 @@
     proto.elem = function(name, attr) {
         var item = Item(this, function() {
             var e = item.P = document.createElement(name),
-                a;
+                a, prop, val, tmp;
 
             for (i in attr) {
                 a = attr[i];
 
                 if (isFunction(a)) { a = a.apply(item.P, curArgs); }
 
-                if (i === 'style') {
-                    e.style.cssText = a;
-                } else {
-                    e.setAttribute(i, a);
+                if (a !== undefined) {
+                    if (i === 'style') {
+                        if (typeof a === 'object') {
+                            val = [];
+
+                            for (prop in a) {
+                                tmp = a[prop];
+
+                                tmp = isFunction(tmp) ? tmp.apply(item.P, curArgs) : tmp;
+
+                                if (tmp !== undefined) {
+                                    val.push(prop + ': ' + tmp);
+                                }
+                            }
+
+                            a = val.join('; ');
+                        }
+
+                        e.style.cssText = a;
+                    } else {
+                        e.setAttribute(i, a);
+                    }
                 }
             }
 
             item.A.P.appendChild(e);
         });
 
-        this._cur = item;
+        this._c = item;
 
         return this;
     };
