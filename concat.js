@@ -1,5 +1,5 @@
 /*!
- * concat.js — v0.0.3 — 2013-07-09
+ * concat.js — v0.0.4 — 2013-07-11
  * https://github.com/hoho/concat.js
  *
  * Copyright (c) 2013 Marat Abdullin
@@ -7,7 +7,7 @@
  */
 (function(document, undefined) {
     var tags = 'div|span|p|a|ul|ol|li|table|tr|td|th|br|img|b|i|s|u'.split('|'),
-        proto = {},
+        proto,
         i,
         curArgs, eachArray,
         isFunction =
@@ -87,91 +87,114 @@
                 return ret;
             };
 
-    constr.prototype = proto;
+    constr.prototype = proto = {
+        repeat: function(num) {
+            var item = Item(this);
 
-    proto.repeat = function(num) {
-        var item = Item(this);
+            item.R = num;
 
-        item.R = num;
+            this._c = item;
 
-        this._c = item;
+            return this;
+        },
 
-        return this;
-    };
+        each: function(arr) {
+            var item = Item(this);
 
-    proto.each = function(arr) {
-        var item = Item(this);
+            item.E = arr;
 
-        item.E = arr;
+            this._c = item;
 
-        this._c = item;
+            return this;
+        },
 
-        return this;
-    };
+        end: function(num) {
+            if (num === undefined) { num = 1; }
 
-    proto.end = function(num) {
-        if (num === undefined) { num = 1; }
-
-        while (num > 0 && (this._c = this._c.A)) {
-            num--;
-        }
-
-        if (this._c) { return this; }
-
-        var r = this._[0];
-
-        run(r);
-
-        if (r.D) {
-            r.D.appendChild(r.P);
-        } else {
-            return r.P;
-        }
-    };
-
-    proto.elem = function(name, attr) {
-        var item = Item(this, function() {
-            var e = item.P = document.createElement(name),
-                a, prop, val, tmp;
-
-            for (i in attr) {
-                a = attr[i];
-
-                if (isFunction(a)) { a = a.apply(item.P, curArgs); }
-
-                if (a !== undefined) {
-                    if (i === 'style') {
-                        if (typeof a === 'object') {
-                            val = [];
-
-                            for (prop in a) {
-                                tmp = a[prop];
-
-                                tmp = isFunction(tmp) ? tmp.apply(item.P, curArgs) : tmp;
-
-                                if (tmp !== undefined) {
-                                    val.push(prop + ': ' + tmp);
-                                }
-                            }
-
-                            a = val.join('; ');
-                        }
-
-                        if (a) {
-                            e.style.cssText = a;
-                        }
-                    } else {
-                        e.setAttribute(i, a);
-                    }
-                }
+            while (num > 0 && (this._c = this._c.A)) {
+                num--;
             }
 
-            item.A.P.appendChild(e);
-        });
+            if (this._c) { return this; }
 
-        this._c = item;
+            var r = this._[0];
 
-        return this;
+            run(r);
+
+            if (r.D) {
+                r.D.appendChild(r.P);
+            } else {
+                return r.P;
+            }
+        },
+
+        elem: function(name, attr) {
+            var item = Item(this, function() {
+                var e = item.P = document.createElement(name),
+                    a, prop, val, tmp;
+
+                for (i in attr) {
+                    a = attr[i];
+
+                    if (isFunction(a)) { a = a.apply(e, curArgs); }
+
+                    if (a !== undefined) {
+                        if (i === 'style') {
+                            if (typeof a === 'object') {
+                                val = [];
+
+                                for (prop in a) {
+                                    tmp = a[prop];
+
+                                    tmp = isFunction(tmp) ?
+                                        tmp.apply(e, curArgs)
+                                        :
+                                        tmp;
+
+                                    if (tmp !== undefined) {
+                                        val.push(prop + ': ' + tmp);
+                                    }
+                                }
+
+                                a = val.join('; ');
+                            }
+
+                            if (a) {
+                                e.style.cssText = a;
+                            }
+                        } else {
+                            e.setAttribute(i, a);
+                        }
+                    }
+                }
+
+                item.A.P.appendChild(e);
+            });
+
+            this._c = item;
+
+            return this;
+        },
+
+        text: function(text) {
+            var item = Item(this, function(t) {
+                t = isFunction(text) ? text.apply(item.A.P, curArgs) : text;
+
+                if (t !== undefined) {
+                    item.A.P.appendChild(document.createTextNode(t));
+                }
+            });
+
+            return this;
+        },
+
+        do: function(func) {
+            var item = Item(this, function() {
+                func.apply(item.A.P, curArgs);
+            });
+
+            return this;
+        }
     };
 
     // Shortcuts for popular tags, to use .div() instead of .elem('div').
@@ -182,26 +205,6 @@
             };
         })(tags[i]);
     }
-
-    proto.text = function(text) {
-        var item = Item(this, function() {
-            item.A.P.appendChild(
-                document.createTextNode(
-                    isFunction(text) ? text.apply(item.A.P, curArgs) : text
-                )
-            );
-        });
-
-        return this;
-    };
-
-    proto.do = function(func) {
-        var item = Item(this, function() {
-            func.apply(item.A.P, curArgs);
-        });
-
-        return this;
-    };
 
     window.$C = function(parent) {
         return new constr(parent);
