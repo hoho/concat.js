@@ -9,7 +9,7 @@ Chainable DOM Builder
 
     $C(document.body)
         .div({'class': 'ololo', 'style': 'background-color: red; height: 100px;'})
-            .do(function() { this.addEventListener('click', function() { alert(5555); }); })
+            .act(function() { this.addEventListener('click', function() { alert(5555); }); })
             .ul()
                 .repeat(2)
                     .li()
@@ -27,7 +27,7 @@ Chainable DOM Builder
         .end()
         .div()
             .text('hello')
-            .do(function() { this.innerHTML += '<br>'; })
+            .act(function() { this.innerHTML += '<br>'; })
             .text('world')
         .end()
         .each([9, 8, 7])

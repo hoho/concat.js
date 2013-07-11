@@ -1,18 +1,24 @@
 function domToArray(node) {
-    var ret = [], i, j, n, attr, a;
+    var ret = [], i, j, n, attr, a, tmp;
 
     for (i = 0; i < node.childNodes.length; i++) {
         n = node.childNodes[i];
 
         if (n.nodeType === 3) {
-            ret.push(n.textContent);
+            ret.push(n.nodeValue);
         } else {
             attr = {};
             for (j = 0; j < n.attributes.length; j++) {
                 a = n.attributes[j];
 
+                if (!a.specified) {
+                    continue;
+                }
+
                 if (a.name === 'style') {
-                    attr[a.name] = n.style.cssText.replace(/'|"|;$/g, '');
+                    tmp = n.style.cssText.replace(/'|"|;$/g, '').toLowerCase().split('; ');
+                    tmp.sort();
+                    attr[a.name] = tmp.join('; ');
                 } else {
                     attr[a.name] = a.value;
                 }
@@ -44,7 +50,7 @@ function attrEqual(val, expected) {
 }
 
 function domEqual(val, expected) {
-    var i, attr;
+    var i;
 
     equal(val.length, expected.length, 'Same node count');
 
@@ -63,37 +69,37 @@ function domEqual(val, expected) {
 
 test('concat.js callback context', function() {
     var container = document.getElementById('container'),
-        dos = [];
+        acts = [];
 
-    var callback = function(index, item) { return "'" + index + ' ' + item + ' ' + this.tagName + "'"; },
-        docallback = function(index, item) { dos.push(index + ' ' + item + ' ' + this.tagName) };
+    var callback = function(index, item) { return "'" + index + ' ' + item + ' ' + this.tagName.toLowerCase() + "'"; },
+        actcallback = function(index, item) { acts.push(index + ' ' + item + ' ' + (this.tagName || 'fragment').toLowerCase()) };
 
     $C(container)
-        .elem('section')
+        .elem('h1')
             .text('hello')
-            .do(docallback)
-            .text(function() { if (this.tagName === 'SECTION') { return ' world'; }})
+            .act(actcallback)
+            .text(function() { if (this.tagName === 'H1') { return ' world'; }})
         .end()
         .repeat(2)
-            .do(docallback)
+            .act(actcallback)
             .span()
-                .each(['a', 'b'])
+                .each(['aa', 'bb'])
                     .repeat(3)
                         .b({test: callback, style: function() { return {content: callback}}})
                             .text(callback)
-                            .do(docallback)
+                            .act(actcallback)
                         .end()
-                        .do(docallback)
+                        .act(actcallback)
                     .end()
-                    .do(docallback)
+                    .act(actcallback)
                     .u({style: {content: callback}})
                         .text(callback)
-                        .do(docallback)
+                        .act(actcallback)
                     .end()
                 .end()
-                .do(docallback)
+                .act(actcallback)
                 .i()
-                    .do(docallback)
+                    .act(actcallback)
                     .text(callback)
                 .end()
             .end()
@@ -101,71 +107,71 @@ test('concat.js callback context', function() {
     .end();
 
     domEqual(domToArray(container), [
-        {name: 'section', children: ['hello', ' world']},
+        {name: 'h1', children: ['hello', ' world']},
         {name: 'span', children: [
-            {name: 'b', attr: {test: "'0 undefined B'", style: "content: 0 undefined B"}, children: ["'0 undefined B'"]},
-            {name: 'b', attr: {test: "'1 undefined B'", style: "content: 1 undefined B"}, children: ["'1 undefined B'"]},
-            {name: 'b', attr: {test: "'2 undefined B'", style: "content: 2 undefined B"}, children: ["'2 undefined B'"]},
-            {name: 'u', attr: {style: "content: 0 a U"}, children: ["'0 a U'"]},
-            {name: 'b', attr: {test: "'0 undefined B'", style: "content: 0 undefined B"}, children: ["'0 undefined B'"]},
-            {name: 'b', attr: {test: "'1 undefined B'", style: "content: 1 undefined B"}, children: ["'1 undefined B'"]},
-            {name: 'b', attr: {test: "'2 undefined B'", style: "content: 2 undefined B"}, children: ["'2 undefined B'"]},
-            {name: 'u', attr: {style: "content: 1 b U"}, children: ["'1 b U'"]},
-            {name: 'i', children: ["'0 undefined I'"]}
+            {name: 'b', attr: {test: "'0 undefined b'", style: "content: 0 undefined b"}, children: ["'0 undefined b'"]},
+            {name: 'b', attr: {test: "'1 undefined b'", style: "content: 1 undefined b"}, children: ["'1 undefined b'"]},
+            {name: 'b', attr: {test: "'2 undefined b'", style: "content: 2 undefined b"}, children: ["'2 undefined b'"]},
+            {name: 'u', attr: {style: "content: 0 aa u"}, children: ["'0 aa u'"]},
+            {name: 'b', attr: {test: "'0 undefined b'", style: "content: 0 undefined b"}, children: ["'0 undefined b'"]},
+            {name: 'b', attr: {test: "'1 undefined b'", style: "content: 1 undefined b"}, children: ["'1 undefined b'"]},
+            {name: 'b', attr: {test: "'2 undefined b'", style: "content: 2 undefined b"}, children: ["'2 undefined b'"]},
+            {name: 'u', attr: {style: "content: 1 bb u"}, children: ["'1 bb u'"]},
+            {name: 'i', children: ["'0 undefined i'"]}
         ]},
         {name: 'span', children: [
-            {name: 'b', attr: {test: "'0 undefined B'", style: "content: 0 undefined B"}, children: ["'0 undefined B'"]},
-            {name: 'b', attr: {test: "'1 undefined B'", style: "content: 1 undefined B"}, children: ["'1 undefined B'"]},
-            {name: 'b', attr: {test: "'2 undefined B'", style: "content: 2 undefined B"}, children: ["'2 undefined B'"]},
-            {name: 'u', attr: {style: "content: 0 a U"}, children: ["'0 a U'"]},
-            {name: 'b', attr: {test: "'0 undefined B'", style: "content: 0 undefined B"}, children: ["'0 undefined B'"]},
-            {name: 'b', attr: {test: "'1 undefined B'", style: "content: 1 undefined B"}, children: ["'1 undefined B'"]},
-            {name: 'b', attr: {test: "'2 undefined B'", style: "content: 2 undefined B"}, children: ["'2 undefined B'"]},
-            {name: 'u', attr: {style: "content: 1 b U"}, children: ["'1 b U'"]},
-            {name: 'i', children: ["'1 undefined I'"]}
+            {name: 'b', attr: {test: "'0 undefined b'", style: "content: 0 undefined b"}, children: ["'0 undefined b'"]},
+            {name: 'b', attr: {test: "'1 undefined b'", style: "content: 1 undefined b"}, children: ["'1 undefined b'"]},
+            {name: 'b', attr: {test: "'2 undefined b'", style: "content: 2 undefined b"}, children: ["'2 undefined b'"]},
+            {name: 'u', attr: {style: "content: 0 aa u"}, children: ["'0 aa u'"]},
+            {name: 'b', attr: {test: "'0 undefined b'", style: "content: 0 undefined b"}, children: ["'0 undefined b'"]},
+            {name: 'b', attr: {test: "'1 undefined b'", style: "content: 1 undefined b"}, children: ["'1 undefined b'"]},
+            {name: 'b', attr: {test: "'2 undefined b'", style: "content: 2 undefined b"}, children: ["'2 undefined b'"]},
+            {name: 'u', attr: {style: "content: 1 bb u"}, children: ["'1 bb u'"]},
+            {name: 'i', children: ["'1 undefined i'"]}
         ]}
     ]);
 
-    deepEqual(dos, [
-        'undefined undefined SECTION',
-        '0 undefined undefined',
-        '0 undefined B',
-        '0 undefined SPAN',
-        '1 undefined B',
-        '1 undefined SPAN',
-        '2 undefined B',
-        '2 undefined SPAN',
-        '0 a SPAN',
-        '0 a U',
-        '0 undefined B',
-        '0 undefined SPAN',
-        '1 undefined B',
-        '1 undefined SPAN',
-        '2 undefined B',
-        '2 undefined SPAN',
-        '1 b SPAN',
-        '1 b U',
-        '0 undefined SPAN',
-        '0 undefined I',
-        '1 undefined undefined',
-        '0 undefined B',
-        '0 undefined SPAN',
-        '1 undefined B',
-        '1 undefined SPAN',
-        '2 undefined B',
-        '2 undefined SPAN',
-        '0 a SPAN',
-        '0 a U',
-        '0 undefined B',
-        '0 undefined SPAN',
-        '1 undefined B',
-        '1 undefined SPAN',
-        '2 undefined B',
-        '2 undefined SPAN',
-        '1 b SPAN',
-        '1 b U',
-        '1 undefined SPAN',
-        '1 undefined I'
+    deepEqual(acts, [
+        'undefined undefined h1',
+        '0 undefined fragment',
+        '0 undefined b',
+        '0 undefined span',
+        '1 undefined b',
+        '1 undefined span',
+        '2 undefined b',
+        '2 undefined span',
+        '0 aa span',
+        '0 aa u',
+        '0 undefined b',
+        '0 undefined span',
+        '1 undefined b',
+        '1 undefined span',
+        '2 undefined b',
+        '2 undefined span',
+        '1 bb span',
+        '1 bb u',
+        '0 undefined span',
+        '0 undefined i',
+        '1 undefined fragment',
+        '0 undefined b',
+        '0 undefined span',
+        '1 undefined b',
+        '1 undefined span',
+        '2 undefined b',
+        '2 undefined span',
+        '0 aa span',
+        '0 aa u',
+        '0 undefined b',
+        '0 undefined span',
+        '1 undefined b',
+        '1 undefined span',
+        '2 undefined b',
+        '2 undefined span',
+        '1 bb span',
+        '1 bb u',
+        '1 undefined span',
+        '1 undefined i'
     ]);
 
     container.innerHTML = '';
@@ -183,7 +189,7 @@ test('concat.js complex test', function() {
                         .text('aaa')
         .end(4)
         .repeat(3)
-            .span({'style': 'border: 1px solid green;'})
+            .span({'style': 'left: 123px;'})
                 .text(function(index) { return index; })
             .end()
         .end()
@@ -194,7 +200,7 @@ test('concat.js complex test', function() {
         .end()
         .div()
             .text('hello')
-            .do(function() { this.innerHTML += '<br>'; })
+            .act(function() { this.innerHTML += '<br>'; })
             .text('world')
         .end()
         .each([9, 8, 7])
@@ -217,9 +223,9 @@ test('concat.js complex test', function() {
                 {name: 'li', children: ['aaa']}
             ]}
         ]},
-        {name: 'span', attr: {style: 'border: 1px solid green'}, children: ['0']},
-        {name: 'span', attr: {style: 'border: 1px solid green'}, children: ['1']},
-        {name: 'span', attr: {style: 'border: 1px solid green'}, children: ['2']},
+        {name: 'span', attr: {style: 'left: 123px'}, children: ['0']},
+        {name: 'span', attr: {style: 'left: 123px'}, children: ['1']},
+        {name: 'span', attr: {style: 'left: 123px'}, children: ['2']},
         {name: 'p', children: ['0 1']},
         {name: 'p', children: ['1 2']},
         {name: 'p', children: ['2 3']},

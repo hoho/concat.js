@@ -1,5 +1,5 @@
 /*!
- * concat.js — v0.0.4 — 2013-07-11
+ * concat.js — v0.0.5 — 2013-07-12
  * https://github.com/hoho/concat.js
  *
  * Copyright (c) 2013 Marat Abdullin
@@ -9,7 +9,7 @@
     var tags = 'div|span|p|a|ul|ol|li|table|tr|td|th|br|img|b|i|s|u'.split('|'),
         proto,
         i,
-        curArgs, eachArray,
+        curArgs = [], eachArray,
         isFunction =
             function(func) {
                 return typeof func === 'function';
@@ -188,7 +188,7 @@
             return this;
         },
 
-        do: function(func) {
+        act: function(func) {
             var item = Item(this, function() {
                 func.apply(item.A.P, curArgs);
             });
