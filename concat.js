@@ -1,11 +1,14 @@
 /*!
- * concat.js — v0.0.5 — 2013-07-12
+ * concat.js — v0.0.6 — 2013-07-12
  * https://github.com/hoho/concat.js
  *
- * Copyright (c) 2013 Marat Abdullin
+ * Copyright 2013 Marat Abdullin
  * Released under the MIT license
  */
 (function(document, undefined) {
+    // This code is being optimized for size, so some parts of it could be
+    // a bit hard to read. But it is quite short anyway.
+
     var tags = 'div|span|p|a|ul|ol|li|table|tr|td|th|br|img|b|i|s|u'.split('|'),
         proto,
         i,
@@ -36,26 +39,25 @@
                 var R, i, j, oldArgs = curArgs, oldEachArray = eachArray;
 
                 if (item.E !== undefined) {
-                    curArgs = [-1, null];
+                    curArgs = [-1, undefined];
                     eachArray = item.E;
 
                     R = function() {
                         j = ++curArgs[0];
                         curArgs[1] = eachArray[j];
+
                         return j < eachArray.length;
                     };
                 } else if (item.R !== undefined) {
                     curArgs = [-1];
                     eachArray = undefined;
 
-                    R = isFunction(item.R) ?
-                        function() {
-                            return item.R.call(item.A.P, 1 + curArgs[0]++);
-                        }
-                        :
-                        function() {
-                            return curArgs[0]++ < item.R - 1;
-                        };
+                    R = function() {
+                        return isFunction(item.R) ?
+                            item.R.call(item.A.P, ++curArgs[0])
+                            :
+                            ++curArgs[0] < item.R;
+                    };
                 } else {
                     i = 1;
                 }
@@ -129,14 +131,13 @@
         },
 
         elem: function(name, attr) {
-            var item = Item(this, function() {
-                var e = item.P = document.createElement(name),
-                    a, prop, val, tmp;
+            var item = Item(this, function(elem, a, prop, val, tmp) {
+                elem = item.P = document.createElement(name);
 
                 for (i in attr) {
-                    a = attr[i];
-
-                    if (isFunction(a)) { a = a.apply(e, curArgs); }
+                    if (isFunction(a = attr[i])) {
+                        a = a.apply(elem, curArgs);
+                    }
 
                     if (a !== undefined) {
                         if (i === 'style') {
@@ -144,12 +145,9 @@
                                 val = [];
 
                                 for (prop in a) {
-                                    tmp = a[prop];
-
-                                    tmp = isFunction(tmp) ?
-                                        tmp.apply(e, curArgs)
-                                        :
-                                        tmp;
+                                    if (isFunction(tmp = a[prop])) {
+                                        tmp = tmp.apply(elem, curArgs);
+                                    }
 
                                     if (tmp !== undefined) {
                                         val.push(prop + ': ' + tmp);
@@ -160,15 +158,15 @@
                             }
 
                             if (a) {
-                                e.style.cssText = a;
+                                elem.style.cssText = a;
                             }
                         } else {
-                            e.setAttribute(i, a);
+                            elem.setAttribute(i, a);
                         }
                     }
                 }
 
-                item.A.P.appendChild(e);
+                item.A.P.appendChild(elem);
             });
 
             this._c = item;
