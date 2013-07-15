@@ -1,5 +1,5 @@
 /*!
- * concat.js — v0.0.6 — 2013-07-12
+ * concat.js — v0.0.7 — 2013-07-15
  * https://github.com/hoho/concat.js
  *
  * Copyright 2013 Marat Abdullin
