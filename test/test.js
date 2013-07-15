@@ -203,6 +203,9 @@ test('concat.js complex test', function() {
             .act(function() { this.innerHTML += '<br>'; })
             .text('world')
         .end()
+        .br(true)
+        .elem('hr', true)
+        .br({'class': 'auch'}, true)
         .each([9, 8, 7])
             .p({style: {'background-color': function() { return this.tagName.toLowerCase() + 'urple'; }, height: '100px'}})
                 .text(function(index, item) { return index + ' ' + item; })
@@ -232,6 +235,9 @@ test('concat.js complex test', function() {
         {name: 'p', children: ['3 4']},
         {name: 'p', children: ['4 5']},
         {name: 'div', children: ['hello', {name: 'br', children: []}, 'world']},
+        {name: 'br', children: []},
+        {name: 'hr', children: []},
+        {name: 'br', attr: {'class': 'auch'}, children: []},
         {name: 'p', attr: {style: 'background-color: purple; height: 100px'}, children: [
             '0 9',
             {name: 'div', children: ['0']},

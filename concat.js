@@ -130,7 +130,7 @@
             }
         },
 
-        elem: function(name, attr) {
+        elem: function(name, attr, close) {
             var item = Item(this, function(elem, a, prop, val, tmp) {
                 elem = item.P = document.createElement(name);
 
@@ -171,7 +171,12 @@
 
             this._c = item;
 
-            return this;
+            // attr argument is optional, if it strictly equals to true,
+            // use it as close, when close is not passed.
+            return close || (close === undefined && attr === true) ?
+                this.end()
+                :
+                this;
         },
 
         text: function(text) {
@@ -198,8 +203,8 @@
     // Shortcuts for popular tags, to use .div() instead of .elem('div').
     for (i = 0; i < tags.length; i++) {
         proto[tags[i]] = (function(name) {
-            return function(attr) {
-                return this.elem(name, attr);
+            return function(attr, close) {
+                return this.elem(name, attr, close);
             };
         })(tags[i]);
     }
