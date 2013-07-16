@@ -79,6 +79,14 @@ test('concat.js callback context', function() {
             .text('hello')
             .act(actcallback)
             .text(function() { if (this.tagName === 'H1') { return ' world'; }})
+            .each([777])
+                .test(true)
+                    .br({test: callback}, true)
+                .end()
+                .test(function(index, item) { actcallback.call(this, index, item); return true; })
+                    .br({test: callback}, true)
+                .end()
+            .end()
         .end()
         .repeat(2)
             .act(actcallback)
@@ -107,7 +115,12 @@ test('concat.js callback context', function() {
     .end();
 
     domEqual(domToArray(container), [
-        {name: 'h1', children: ['hello', ' world']},
+        {name: 'h1', children: [
+            'hello',
+            ' world',
+            {name: 'br', attr: {test: "'0 777 br'"}, children: []},
+            {name: 'br', attr: {test: "'0 777 br'"}, children: []}
+        ]},
         {name: 'span', children: [
             {name: 'b', attr: {test: "'0 undefined b'", style: "content: 0 undefined b"}, children: ["'0 undefined b'"]},
             {name: 'b', attr: {test: "'1 undefined b'", style: "content: 1 undefined b"}, children: ["'1 undefined b'"]},
@@ -134,6 +147,7 @@ test('concat.js callback context', function() {
 
     deepEqual(acts, [
         'undefined undefined h1',
+        '0 777 h1',
         '0 undefined fragment',
         '0 undefined b',
         '0 undefined span',
@@ -217,6 +231,18 @@ test('concat.js complex test', function() {
                 .div()
                     .text(function(index, item) { return index + ' ' + item; })
         .end(3)
+        .test(true)
+            .br({test: 'ololo'}, true)
+        .end()
+        .test(false)
+            .br({test: 'ololo2'}, true)
+        .end()
+        .test(function() { return false; })
+            .br({test: 'ololo3'}, true)
+        .end()
+        .test(function() { return true; })
+            .br({test: 'ololo4'}, true)
+        .end()
     .end();
 
     domEqual(domToArray(container), [
@@ -255,7 +281,9 @@ test('concat.js complex test', function() {
             {name: 'div', children: ['0']},
             {name: 'div', children: ['1']},
             {name: 'div', children: ['2 7']}
-        ]}
+        ]},
+        {name: 'br', attr: {test: 'ololo'}, children: []},
+        {name: 'br', attr: {test: 'ololo4'}, children: []}
     ]);
 
     container.innerHTML = '';

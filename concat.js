@@ -1,7 +1,5 @@
 /*!
- * concat.js — v0.0.7 — 2013-07-15
- * https://github.com/hoho/concat.js
- *
+ * concat.js v0.0.8, 2013-07-16, https://github.com/hoho/concat.js
  * Copyright 2013 Marat Abdullin
  * Released under the MIT license
  */
@@ -26,6 +24,7 @@
                 // F — a function to call before processing subitems.
                 // R — how many times to repeat this item.
                 // E — an array for each().
+                // T — test expression (for conditional subtree processing).
                 // _ — subitems.
                 this._ = [this._c = {
                     D: parent,
@@ -59,11 +58,16 @@
                             ++curArgs[0] < item.R;
                     };
                 } else {
-                    i = 1;
+                    i = isFunction(item.T) ?
+                        (item.T.apply(item.A.P, curArgs) ? 1 : 0)
+                        :
+                        (item.T === undefined) || item.T ? 1 : 0;
                 }
 
                 while ((!R && i--) || (R && R())) {
-                    if (R) { item.P = item.A.P; }
+                    if (R || item.T) {
+                        item.P = item.A.P;
+                    }
 
                     item.F && item.F();
 
@@ -90,26 +94,6 @@
             };
 
     constr.prototype = proto = {
-        repeat: function(num) {
-            var item = Item(this);
-
-            item.R = num;
-
-            this._c = item;
-
-            return this;
-        },
-
-        each: function(arr) {
-            var item = Item(this);
-
-            item.E = arr;
-
-            this._c = item;
-
-            return this;
-        },
-
         end: function(num) {
             if (num === undefined) { num = 1; }
 
@@ -199,6 +183,22 @@
             return this;
         }
     };
+
+    i = function(prop) {
+        return function(arg) {
+            var item = Item(this);
+
+            item[prop] = arg;
+
+            this._c = item;
+
+            return this;
+        }
+    };
+
+    proto.repeat = i('R');
+    proto.each = i('E');
+    proto.test = i('T');
 
     // Shortcuts for popular tags, to use .div() instead of .elem('div').
     for (i = 0; i < tags.length; i++) {
