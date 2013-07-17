@@ -1,5 +1,5 @@
 /*!
- * concat.js v0.0.8, 2013-07-16, https://github.com/hoho/concat.js
+ * concat.js v0.0.9, https://github.com/hoho/concat.js
  * Copyright 2013 Marat Abdullin
  * Released under the MIT license
  */
@@ -17,7 +17,7 @@
             },
 
         constr =
-            function(parent) {
+            function(parent, replace) {
                 // D — node to append the result to (if any).
                 // P — item's parent node.
                 // A — item's parent item.
@@ -26,8 +26,9 @@
                 // E — an array for each().
                 // T — test expression (for conditional subtree processing).
                 // _ — subitems.
+
                 this._ = [this._c = {
-                    D: parent,
+                    D: parent && {p: parent, r: replace},
                     P: document.createDocumentFragment(),
                     _: []
                 }];
@@ -107,8 +108,12 @@
 
             run(r);
 
-            if (r.D) {
-                r.D.appendChild(r.P);
+            if (i = r.D) {
+                if (i.r) {
+                    i.p.innerHTML = '';
+                }
+
+                i.p.appendChild(r.P);
             } else {
                 return r.P;
             }
@@ -209,7 +214,7 @@
         })(tags[i]);
     }
 
-    window.$C = function(parent) {
-        return new constr(parent);
+    window.$C = function(parent, replace) {
+        return new constr(parent, replace);
     };
 })(document);

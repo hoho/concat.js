@@ -67,6 +67,43 @@ function domEqual(val, expected) {
     }
 }
 
+test('concat.js replace content', function() {
+    var container = document.getElementById('container');
+
+    $C(container).text('text1').end();
+
+    domEqual(domToArray(container), ['text1']);
+
+    $C(container).text('text2').end();
+
+    domEqual(domToArray(container), ['text1', 'text2']);
+
+    $C(container, true).text('text3').end();
+
+    domEqual(domToArray(container), ['text3']);
+
+    $C(container, true).text('text4').end();
+
+    domEqual(domToArray(container), ['text4']);
+
+    container.innerHTML = '';
+});
+
+test('concat.js return value', function() {
+    var container = document.getElementById('container');
+
+    equal($C(container).text('text1').end(), undefined);
+
+    container.innerHTML = '';
+
+    var tmp = $C().text('text2').br(true).end();
+
+    equal(tmp.nodeType, 11);
+    equal(tmp.firstChild.nodeValue, 'text2');
+    equal(tmp.lastChild.tagName.toLowerCase(), 'br');
+    domEqual(domToArray(container), []);
+});
+
 test('concat.js callback context', function() {
     var container = document.getElementById('container'),
         acts = [];
@@ -74,7 +111,7 @@ test('concat.js callback context', function() {
     var callback = function(index, item) { return "'" + index + ' ' + item + ' ' + this.tagName.toLowerCase() + "'"; },
         actcallback = function(index, item) { acts.push(index + ' ' + item + ' ' + (this.tagName || 'fragment').toLowerCase()) };
 
-    $C(container)
+    $C(container, true)
         .elem('h1')
             .text('hello')
             .act(actcallback)
@@ -195,7 +232,7 @@ test('concat.js complex test', function() {
     var container = document.getElementById('container'),
         tmp = 0;
 
-    $C(container)
+    $C(container, true)
         .div({'class': 'ololo', tmp: undefined, tmp2: function() {}, something: function() { return this.tagName; }})
             .ul()
                 .repeat(2)
