@@ -1,5 +1,5 @@
 /*!
- * concat.js v0.0.10, https://github.com/hoho/concat.js
+ * concat.js v0.0.11, https://github.com/hoho/concat.js
  * Copyright 2013 Marat Abdullin
  * Released under the MIT license
  */
@@ -82,8 +82,8 @@
             },
 
         Item =
-            function(self, func) {
-                var ret = {
+            function(self, func, ret) {
+                ret = {
                     A: self.c,
                     F: func,
                     _: []
@@ -95,7 +95,7 @@
             };
 
     constr.prototype = proto = {
-        end: function(num, self) {
+        end: function(num, self, r) {
             self = this;
 
             if (num === undefined) { num = 1; }
@@ -106,7 +106,7 @@
 
             if (self.c) { return self; }
 
-            var r = self._[0];
+            r = self._[0];
 
             run(r);
 
@@ -121,8 +121,8 @@
             }
         },
 
-        elem: function(name, attr, close) {
-            var item = Item(this, function(elem, a, prop, val, tmp) {
+        elem: function(name, attr, close, item) {
+            item = Item(this, function(elem, a, prop, val, tmp) {
                 elem = item.P = document.createElement(name);
 
                 for (i in attr) {
@@ -170,8 +170,8 @@
                 this;
         },
 
-        text: function(text) {
-            var item = Item(this, function(t) {
+        text: function(text, item) {
+            item = Item(this, function(t) {
                 t = isFunction(text) ? text.apply(item.A.P, curArgs) : text;
 
                 if (t !== undefined) {
@@ -182,8 +182,8 @@
             return this;
         },
 
-        act: function(func) {
-            var item = Item(this, function() {
+        act: function(func, item) {
+            item = Item(this, function() {
                 func.apply(item.A.P, curArgs);
             });
 
@@ -192,8 +192,8 @@
     };
 
     i = function(prop, defaultValue) {
-        return function(arg, self) {
-            var item = Item(self = this);
+        return function(arg, item, self) {
+            item = Item(self = this);
 
             item[prop] = arg === undefined ? defaultValue : arg;
 
