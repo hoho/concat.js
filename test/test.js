@@ -18,6 +18,9 @@ function domToArray(node) {
                 if (a.name === 'style') {
                     tmp = n.style.cssText.replace(/'|"|;$/g, '').toLowerCase().split('; ');
                     tmp.sort();
+                    while (tmp.length > 0 && !tmp[0]) {
+                        tmp.shift();
+                    }
                     attr[a.name] = tmp.join('; ');
                 } else {
                     attr[a.name] = a.value;
