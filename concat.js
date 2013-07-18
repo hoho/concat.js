@@ -1,5 +1,5 @@
 /*!
- * concat.js v0.0.9, https://github.com/hoho/concat.js
+ * concat.js v0.0.10, https://github.com/hoho/concat.js
  * Copyright 2013 Marat Abdullin
  * Released under the MIT license
  */
@@ -27,7 +27,7 @@
                 // T — test expression (for conditional subtree processing).
                 // _ — subitems.
 
-                this._ = [this._c = {
+                this._ = [this.c = {
                     D: parent && {p: parent, r: replace},
                     P: document.createDocumentFragment(),
                     _: []
@@ -84,27 +84,29 @@
         Item =
             function(self, func) {
                 var ret = {
-                    A: self._c,
+                    A: self.c,
                     F: func,
                     _: []
                 };
 
-                self._c._.push(ret);
+                self.c._.push(ret);
 
                 return ret;
             };
 
     constr.prototype = proto = {
-        end: function(num) {
+        end: function(num, self) {
+            self = this;
+
             if (num === undefined) { num = 1; }
 
-            while (num > 0 && (this._c = this._c.A)) {
+            while (num > 0 && (self.c = self.c.A)) {
                 num--;
             }
 
-            if (this._c) { return this; }
+            if (self.c) { return self; }
 
-            var r = this._[0];
+            var r = self._[0];
 
             run(r);
 
@@ -158,7 +160,7 @@
                 item.A.P.appendChild(elem);
             });
 
-            this._c = item;
+            this.c = item;
 
             // attr argument is optional, if it strictly equals to true,
             // use it as close, when close is not passed.
@@ -189,21 +191,21 @@
         }
     };
 
-    i = function(prop) {
-        return function(arg) {
-            var item = Item(this);
+    i = function(prop, defaultValue) {
+        return function(arg, self) {
+            var item = Item(self = this);
 
-            item[prop] = arg;
+            item[prop] = arg === undefined ? defaultValue : arg;
 
-            this._c = item;
+            self.c = item;
 
-            return this;
+            return self;
         }
     };
 
-    proto.repeat = i('R');
-    proto.each = i('E');
-    proto.test = i('T');
+    proto.repeat = i('R', 0);
+    proto.each = i('E', []);
+    proto.test = i('T', false);
 
     // Shortcuts for popular tags, to use .div() instead of .elem('div').
     for (i = 0; i < tags.length; i++) {

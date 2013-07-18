@@ -89,6 +89,24 @@ test('concat.js replace content', function() {
     container.innerHTML = '';
 });
 
+test('concat.js undefined values', function() {
+    var container = document.getElementById('container');
+
+    $C(container).text('text1').test(undefined).text('text2').end().text('text3').end();
+
+    domEqual(domToArray(container), ['text1', 'text3']);
+
+    $C(container, true).text('text4').each(undefined).text('text5').end().text('text6').end();
+
+    domEqual(domToArray(container), ['text4', 'text6']);
+
+    $C(container, true).text('text7').repeat(undefined).text('text8').end().text('text9').end();
+
+    domEqual(domToArray(container), ['text7', 'text9']);
+
+    container.innerHTML = '';
+});
+
 test('concat.js return value', function() {
     var container = document.getElementById('container');
 
