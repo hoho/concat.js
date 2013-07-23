@@ -1,5 +1,5 @@
 /*!
- * concat.js v0.0.11, https://github.com/hoho/concat.js
+ * concat.js v0.1.0, https://github.com/hoho/concat.js
  * Copyright 2013 Marat Abdullin
  * Released under the MIT license
  */
@@ -121,79 +121,82 @@
             }
         },
 
-        elem: function(name, attr, close, item) {
-            item = Item(this, function(elem, a, prop, val, tmp) {
-                elem = item.P = document.createElement(name);
+        elem: function(name, attr, close) {
+            var self = this,
+                item = Item(self, function(elem, a, prop, val, tmp) {
+                    elem = item.P = document.createElement(name);
 
-                for (i in attr) {
-                    if (isFunction(a = attr[i])) {
-                        a = a.apply(elem, curArgs);
-                    }
+                    for (i in attr) {
+                        if (isFunction(a = attr[i])) {
+                            a = a.apply(elem, curArgs);
+                        }
 
-                    if (a !== undefined) {
-                        if (i === 'style') {
-                            if (typeof a === 'object') {
-                                val = [];
+                        if (a !== undefined) {
+                            if (i === 'style') {
+                                if (typeof a === 'object') {
+                                    val = [];
 
-                                for (prop in a) {
-                                    if (isFunction(tmp = a[prop])) {
-                                        tmp = tmp.apply(elem, curArgs);
+                                    for (prop in a) {
+                                        if (isFunction(tmp = a[prop])) {
+                                            tmp = tmp.apply(elem, curArgs);
+                                        }
+
+                                        if (tmp !== undefined) {
+                                            val.push(prop + ': ' + tmp);
+                                        }
                                     }
 
-                                    if (tmp !== undefined) {
-                                        val.push(prop + ': ' + tmp);
-                                    }
+                                    a = val.join('; ');
                                 }
 
-                                a = val.join('; ');
+                                if (a) {
+                                    elem.style.cssText = a;
+                                }
+                            } else {
+                                elem.setAttribute(i, a);
                             }
-
-                            if (a) {
-                                elem.style.cssText = a;
-                            }
-                        } else {
-                            elem.setAttribute(i, a);
                         }
                     }
-                }
 
-                item.A.P.appendChild(elem);
-            });
+                    item.A.P.appendChild(elem);
+                });
 
-            this.c = item;
+            self.c = item;
 
             // attr argument is optional, if it strictly equals to true,
             // use it as close, when close is not passed.
             return close || (close === undefined && attr === true) ?
-                this.end()
+                self.end()
                 :
-                this;
+                self;
         },
 
-        text: function(text, item) {
-            item = Item(this, function(t) {
-                t = isFunction(text) ? text.apply(item.A.P, curArgs) : text;
+        text: function(text) {
+            var item = Item(this, function(t) {
+                    t = isFunction(text) ? text.apply(item.A.P, curArgs) : text;
 
-                if (t !== undefined) {
-                    item.A.P.appendChild(document.createTextNode(t));
-                }
-            });
+                    if (t !== undefined) {
+                        item.A.P.appendChild(document.createTextNode(t));
+                    }
+                });
 
             return this;
         },
 
-        act: function(func, item) {
-            item = Item(this, function() {
-                func.apply(item.A.P, curArgs);
-            });
+        act: function(func) {
+            var self = this,
+                item = Item(self, function() {
+                    func.apply(item.A.P, curArgs);
+                });
 
-            return this;
+            return self;
         }
     };
 
     i = function(prop, defaultValue) {
-        return function(arg, item, self) {
-            item = Item(self = this);
+        return function(arg) {
+            var self = this,
+                item = Item(self);
 
             item[prop] = arg === undefined ? defaultValue : arg;
 
