@@ -45,27 +45,27 @@ function attrEqual(val, expected) {
         j++;
     }
 
-    equal(i, j, 'Same attribute count');
+    deepEqual(i, j, 'Same attribute count');
 
     for (name in val) {
-        equal(val[name], expected[name], 'Same attribute value');
+        deepEqual(val[name], expected[name], 'Same attribute value');
     }
 }
 
 function domEqual(val, expected) {
     var i;
 
-    equal(val.length, expected.length, 'Same node count');
+    deepEqual(val.length, expected.length, 'Same node count');
 
     for (i = 0; i < Math.min(val.length, expected.length); i++) {
-        equal(typeof val[i], typeof expected[i], 'Same node type');
+        deepEqual(typeof val[i], typeof expected[i], 'Same node type');
 
         if (typeof val[i] === 'object') {
-            equal(val[i].name, expected[i].name, 'Same name');
+            deepEqual(val[i].name, expected[i].name, 'Same name');
             attrEqual(val[i].attr, expected[i].attr);
             domEqual(val[i].children, expected[i].children);
         } else {
-            equal(val[i], expected[i], 'Same text value');
+            deepEqual(val[i], expected[i], 'Same text value');
         }
     }
 }
@@ -113,15 +113,15 @@ test('concat.js undefined values', function() {
 test('concat.js return value', function() {
     var container = document.getElementById('container');
 
-    equal($C(container).text('text1').end(), undefined);
+    deepEqual($C(container).text('text1').end(), undefined);
 
     container.innerHTML = '';
 
     var tmp = $C().text('text2').br(true).end();
 
-    equal(tmp.nodeType, 11);
-    equal(tmp.firstChild.nodeValue, 'text2');
-    equal(tmp.lastChild.tagName.toLowerCase(), 'br');
+    deepEqual(tmp.nodeType, 11);
+    deepEqual(tmp.firstChild.nodeValue, 'text2');
+    deepEqual(tmp.lastChild.tagName.toLowerCase(), 'br');
     domEqual(domToArray(container), []);
 });
 
@@ -347,3 +347,23 @@ test('concat.js complex test', function() {
     container.innerHTML = '';
 });
 
+test('concat.js nofragment test', function() {
+    var container = document.getElementById('container'),
+        tmp;
+
+    // Ignore nofragment == true when no parent.
+    tmp = $C(null, true, true).text('text').end();
+
+    deepEqual(tmp.nodeType, 11);
+
+    tmp = $C(container, false, true).text('text2').end();
+    deepEqual(tmp, undefined);
+    domEqual(domToArray(container), ['text2']);
+
+    // Ignore replace == true when nofragment == true.
+    tmp = $C(container, true, true).text('text3').end();
+    deepEqual(tmp, undefined);
+    domEqual(domToArray(container), ['text2', 'text3']);
+
+    container.innerHTML = '';
+});

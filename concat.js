@@ -1,5 +1,5 @@
 /*!
- * concat.js v0.1.0, https://github.com/hoho/concat.js
+ * concat.js v0.1.1, https://github.com/hoho/concat.js
  * Copyright 2013 Marat Abdullin
  * Released under the MIT license
  */
@@ -17,7 +17,7 @@
             },
 
         constr =
-            function(parent, replace) {
+            function(parent, replace, nofragment) {
                 // D — node to append the result to (if any).
                 // P — item's parent node.
                 // A — item's parent item.
@@ -28,8 +28,8 @@
                 // _ — subitems.
 
                 this._ = [this.c = {
-                    D: parent && {p: parent, r: replace},
-                    P: document.createDocumentFragment(),
+                    D: parent && {p: parent, r: replace, n: nofragment},
+                    P: parent && nofragment ? parent : document.createDocumentFragment(),
                     _: []
                 }];
             },
@@ -111,11 +111,13 @@
             run(r);
 
             if (i = r.D) {
-                if (i.r) {
-                    i.p.innerHTML = '';
-                }
+                if (!i.n) {
+                    if (i.r) {
+                        i.p.innerHTML = '';
+                    }
 
-                i.p.appendChild(r.P);
+                    i.p.appendChild(r.P);
+                }
             } else {
                 return r.P;
             }
@@ -219,7 +221,7 @@
         })(tags[i]);
     }
 
-    window.$C = function(parent, replace) {
-        return new constr(parent, replace);
+    window.$C = function(parent, replace, nofragment) {
+        return new constr(parent, replace, nofragment);
     };
 })(document);
