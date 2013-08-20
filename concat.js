@@ -17,7 +17,7 @@
             },
 
         constr =
-            function(parent, replace, nofragment) {
+            function(parent, replace, noFragment) {
                 // D — node to append the result to (if any).
                 // P — item's parent node.
                 // A — item's parent item.
@@ -28,8 +28,8 @@
                 // _ — subitems.
 
                 this._ = [this.c = {
-                    D: parent && {p: parent, r: replace, n: nofragment},
-                    P: parent && nofragment ? parent : document.createDocumentFragment(),
+                    D: parent && {p: parent, r: replace, n: noFragment},
+                    P: parent && noFragment ? parent : document.createDocumentFragment(),
                     _: []
                 }];
             },
