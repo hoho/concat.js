@@ -5,7 +5,7 @@ Chainable DOM Builder
 
 ## How to use
 
-	$C(parentNode, replace, nofragment)
+	$C(parentNode, replace, noFragment)
 	    ...
 	.end();
 
