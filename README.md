@@ -116,3 +116,18 @@ Chainable DOM Builder
         <div>1</div>
         <div>2 7</div>
     </p>
+
+## Define custom actions
+
+You can define custom actions for build process. For example, if you use jQuery, you can define an action for event handlers binding like below:
+
+    $C.define('on', function(index, item, args) {
+        $.fn.on.apply($(this), args);
+    });
+
+    $C(document.body)
+        .div()
+            .on('click', function(e) { alert(123); })
+            .on('mousemove', function(e) { alert(345); })
+            .text('I am clickable and mousemoveable')
+    .end(2);
