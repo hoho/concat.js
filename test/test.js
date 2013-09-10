@@ -367,3 +367,59 @@ test('concat.js nofragment test', function() {
 
     container.innerHTML = '';
 });
+
+test('concat.js define test', function() {
+    var actual = [];
+
+    $C.define('ololo', function(index, item, args) {
+        args = Array.prototype.slice.call(args, 0);
+        actual.push("'" + index + ' ' + item + ' ' + args + ' ' + this.tagName.toLowerCase() + "'");
+    });
+
+    $C()
+        .div()
+            .ololo('a', 'b', 'c')
+            .ololo('d', 'e', 'f')
+        .end()
+        .span()
+            .ololo('g', 'h', 'i')
+        .end()
+        .repeat(3)
+            .a()
+                .ololo('j', 'k', 'l')
+            .end()
+        .end()
+        .each([111, 222, 333])
+            .elem('section')
+                .ololo('m', 'n', 'o')
+                .each([11111, 22222])
+                    .p()
+                        .ololo('p', 'q', 'r')
+                    .end()
+                .end()
+                .ololo('s', 't', 'u')
+            .end()
+        .end()
+    .end();
+
+    deepEqual(actual, [
+        "'undefined undefined a,b,c div'",
+        "'undefined undefined d,e,f div'",
+        "'undefined undefined g,h,i span'",
+        "'0 undefined j,k,l a'",
+        "'1 undefined j,k,l a'",
+        "'2 undefined j,k,l a'",
+        "'0 111 m,n,o section'",
+        "'0 11111 p,q,r p'",
+        "'1 22222 p,q,r p'",
+        "'0 111 s,t,u section'",
+        "'1 222 m,n,o section'",
+        "'0 11111 p,q,r p'",
+        "'1 22222 p,q,r p'",
+        "'1 222 s,t,u section'",
+        "'2 333 m,n,o section'",
+        "'0 11111 p,q,r p'",
+        "'1 22222 p,q,r p'",
+        "'2 333 s,t,u section'"
+    ]);
+});

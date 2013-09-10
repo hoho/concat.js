@@ -1,5 +1,5 @@
 /*!
- * concat.js v0.1.1, https://github.com/hoho/concat.js
+ * concat.js v0.2.0, https://github.com/hoho/concat.js
  * Copyright 2013 Marat Abdullin
  * Released under the MIT license
  */
@@ -171,27 +171,6 @@
                 self.end()
                 :
                 self;
-        },
-
-        text: function(text) {
-            var item = Item(this, function(t) {
-                    t = isFunction(text) ? text.apply(item.A.P, curArgs) : text;
-
-                    if (t !== undefined) {
-                        item.A.P.appendChild(document.createTextNode(t));
-                    }
-                });
-
-            return this;
-        },
-
-        act: function(func) {
-            var self = this,
-                item = Item(self, function() {
-                    func.apply(item.A.P, curArgs);
-                });
-
-            return self;
         }
     };
 
@@ -221,7 +200,34 @@
         })(tags[i]);
     }
 
-    window.$C = function(parent, replace, nofragment) {
-        return new constr(parent, replace, nofragment);
+    i = window.$C = function(parent, replace, noFragment) {
+        return new constr(parent, replace, noFragment);
     };
+
+    i.define = i = function(name, func) {
+        proto[name] = function() {
+            var self = this,
+                args = arguments,
+                item = Item(self, function() {
+                    func.call(item.A.P, curArgs[0], curArgs[1], args);
+                });
+            return self;
+        }
+    };
+
+    // We're inside and we have an access to curArgs variable which is
+    // [index, item], so we will use curArgs to shorten the code.
+    i('act', function(index, item, args) {
+        args[0].apply(this, curArgs);
+    });
+
+    i('text', function(index, item, args, /**/text) {
+        text = args[0];
+        text = isFunction(text) ? text.apply(this, curArgs) : text;
+
+        if (text !== undefined) {
+            this.appendChild(document.createTextNode(text));
+        }
+
+    });
 })(document);
