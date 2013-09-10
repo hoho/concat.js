@@ -1,5 +1,5 @@
 /*!
- * concat.js v0.3.0, https://github.com/hoho/concat.js
+ * concat.js v0.4.0, https://github.com/hoho/concat.js
  * Copyright 2013 Marat Abdullin
  * Released under the MIT license
  */
@@ -178,7 +178,7 @@
                 self;
         },
 
-        ret: function(func) {
+        mem: function(func) {
             var self = this,
                 item = Item(self, function(parentElem) {
                     parentElem = item.A.P;

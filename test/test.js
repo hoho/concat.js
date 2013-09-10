@@ -436,17 +436,17 @@ test('concat.js ret test', function() {
     tmp = $C(container)
         .div()
             .text('aaa')
-            .ret()
+            .mem()
         .end()
         .span()
-            .ret()
-            .ret(function(index, item) { return 'hehe'; })
+            .mem()
+            .mem(function(index, item) { return 'hehe'; })
         .end()
         .each([22, 33])
             .p()
-                .ret()
+                .mem()
                 .text('ho')
-                .ret(function(index, item) { return "'" + index + ' ' + item + ' ' + this.tagName.toLowerCase() + "'"; })
+                .mem(function(index, item) { return "'" + index + ' ' + item + ' ' + this.tagName.toLowerCase() + "'"; })
             .end()
         .end()
     .end();
@@ -468,10 +468,10 @@ test('concat.js ret test', function() {
     deepEqual(tmp[6], "'1 33 p'");
 
     tmp = $C()
-        .ret(function() { return 'zzz'; })
-        .ret()
+        .mem(function() { return 'zzz'; })
+        .mem()
         .div()
-            .ret()
+            .mem()
         .end()
     .end();
 

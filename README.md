@@ -138,12 +138,12 @@ On every step of DOM building, we can memorize nodes and other data. An array of
 
     var memorized = $C(document.body)
         .div()
-            .ret()
+            .mem()
             .text('hello')
         .end()
         .each([11, 22])
             .span()
-                .ret(function(index, item) {
+                .mem(function(index, item) {
                     return index + ' ' + item + ' ' + this.tagName.toLowerCase();
                 })
             .end()
