@@ -5,9 +5,9 @@ Chainable DOM Builder
 
 ## How to use
 
-	$C(parentNode, replace, noFragment)
-	    ...
-	.end();
+    $C(parentNode, replace, noFragment)
+        ...
+    .end();
 
 `parentNode` is a DOM element to put the result into.
 
@@ -15,7 +15,7 @@ Chainable DOM Builder
 
 `noFragment` indicates that **concat.js** shouldn't use documentFragment and should put the result directly to `parentNode`.
 
-`parentNode` could be undefined, in this case result's documentFragment will be returned with the last `end()` call, `replace` and `noFragment` arguments will be ignored.
+Return value is an array of memorized results (see below). If `parentNode` is undefined, result's documentFragment will be prepended to this array.
 
 
 ## Usage example
@@ -131,3 +131,25 @@ You can define custom actions for build process. For example, if you use jQuery,
             .on('mousemove', function(e) { alert(345); })
             .text('I am clickable and mousemoveable')
     .end(2);
+
+## Memorize results
+
+On every step of DOM building, we can memorize nodes and other data. An array of memorized items is returned with the last .end() call:
+
+    var memorized = $C(document.body)
+        .div()
+            .ret()
+            .text('hello')
+        .end()
+        .each([11, 22])
+            .span()
+                .ret(function(index, item) {
+                    return index + ' ' + item + ' ' + this.tagName.toLowerCase();
+                })
+            .end()
+        .end()
+    .end();
+
+In this example `memorized` will be:
+
+    [<div>​hello​</div>​, '0 11 span', '1 22 span']

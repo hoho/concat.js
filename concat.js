@@ -1,5 +1,5 @@
 /*!
- * concat.js v0.2.0, https://github.com/hoho/concat.js
+ * concat.js v0.3.0, https://github.com/hoho/concat.js
  * Copyright 2013 Marat Abdullin
  * Released under the MIT license
  */
@@ -26,8 +26,11 @@
                 // E — an array for each().
                 // T — test expression (for conditional subtree processing).
                 // _ — subitems.
+                var self = this;
 
-                this._ = [this.c = {
+                self.m = []; // an array to return with the last .end() and a
+                             // place to append .ret() result to.
+                self._ = [self.c = {
                     D: parent && {p: parent, r: replace, n: noFragment},
                     P: parent && noFragment ? parent : document.createDocumentFragment(),
                     _: []
@@ -82,7 +85,7 @@
             },
 
         Item =
-            function(self, func, ret) {
+            function(self, func, /**/ret) {
                 ret = {
                     A: self.c,
                     F: func,
@@ -100,7 +103,7 @@
 
             if (num === undefined) { num = 1; }
 
-            while (num > 0 && (self.c = self.c.A)) {
+            while (num > 0 && ((self.c = self.c.A))) {
                 num--;
             }
 
@@ -110,7 +113,7 @@
 
             run(r);
 
-            if (i = r.D) {
+            if ((i = r.D)) {
                 if (!i.n) {
                     if (i.r) {
                         i.p.innerHTML = '';
@@ -119,8 +122,10 @@
                     i.p.appendChild(r.P);
                 }
             } else {
-                return r.P;
+                self.m.unshift(r.P);
             }
+
+            return self.m;
         },
 
         elem: function(name, attr, close) {
@@ -129,7 +134,7 @@
                     elem = item.P = document.createElement(name);
 
                     for (i in attr) {
-                        if (isFunction(a = attr[i])) {
+                        if (isFunction((a = attr[i]))) {
                             a = a.apply(elem, curArgs);
                         }
 
@@ -139,7 +144,7 @@
                                     val = [];
 
                                     for (prop in a) {
-                                        if (isFunction(tmp = a[prop])) {
+                                        if (isFunction((tmp = a[prop]))) {
                                             tmp = tmp.apply(elem, curArgs);
                                         }
 
@@ -171,6 +176,16 @@
                 self.end()
                 :
                 self;
+        },
+
+        ret: function(func) {
+            var self = this,
+                item = Item(self, function(parentElem) {
+                    parentElem = item.A.P;
+                    self.m.push(isFunction(func) ? func.apply(parentElem, curArgs) : parentElem);
+                });
+
+            return self;
         }
     };
 
@@ -211,6 +226,7 @@
                 item = Item(self, function() {
                     func.call(item.A.P, curArgs[0], curArgs[1], args);
                 });
+
             return self;
         }
     };
