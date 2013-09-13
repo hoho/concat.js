@@ -1,5 +1,5 @@
 /*!
- * concat.js v0.4.0, https://github.com/hoho/concat.js
+ * concat.js v0.5.0, https://github.com/hoho/concat.js
  * Copyright 2013 Marat Abdullin
  * Released under the MIT license
  */
@@ -16,8 +16,23 @@
                 return typeof func === 'function';
             },
 
+        blockFunc =
+            function(prop, defaultValue) {
+                return function(arg) {
+                    var self = this,
+                        item = Item(self);
+
+                    item[prop] = arg === undefined ? defaultValue : arg;
+
+                    self.c = item;
+
+                    return self;
+                }
+            },
+
         constr =
             function(parent, replace, noFragment) {
+                // Item:
                 // D — node to append the result to (if any).
                 // P — item's parent node.
                 // A — item's parent item.
@@ -26,15 +41,21 @@
                 // E — an array for each().
                 // T — test expression (for conditional subtree processing).
                 // _ — subitems.
+                // e — redefinition for end() return value.
+
+                // self.c — current item.
+                // self.m — values memorized with mem().
+                // self._ — first item.
+
                 var self = this;
 
-                self.m = []; // an array to return with the last .end() and a
-                             // place to append .ret() result to.
-                self._ = [self.c = {
+                self.m = [];
+
+                self._ = self.c = {
                     D: parent && {p: parent, r: replace, n: noFragment},
                     P: parent && noFragment ? parent : document.createDocumentFragment(),
                     _: []
-                }];
+                };
             },
 
         run =
@@ -42,12 +63,12 @@
                 var R, i, j, oldArgs = curArgs, oldEachArray = eachArray;
 
                 if (item.E !== undefined) {
-                    curArgs = [-1, undefined];
                     eachArray = item.E;
+                    curArgs = [undefined, -1, eachArray];
 
                     R = function() {
-                        j = ++curArgs[0];
-                        curArgs[1] = eachArray[j];
+                        j = ++curArgs[1];
+                        curArgs[0] = eachArray[j];
 
                         return j < eachArray.length;
                     };
@@ -98,18 +119,20 @@
             };
 
     constr.prototype = proto = {
-        end: function(num, self, r) {
-            self = this;
+        end: function(num) {
+            var self = this,
+                r,
+                ret;
 
             if (num === undefined) { num = 1; }
 
-            while (num > 0 && ((self.c = self.c.A))) {
+            while (num > 0 && ((ret = self.c.e), (self.c = self.c.A))) {
                 num--;
             }
 
-            if (self.c) { return self; }
+            if (self.c) { return ret || self; }
 
-            r = self._[0];
+            r = self._;
 
             run(r);
 
@@ -130,7 +153,7 @@
 
         elem: function(name, attr, close) {
             var self = this,
-                item = Item(self, function(elem, a, prop, val, tmp) {
+                item = Item(self, function(elem/**/, a, prop, val, tmp) {
                     elem = item.P = document.createElement(name);
 
                     for (i in attr) {
@@ -189,22 +212,36 @@
         }
     };
 
-    i = function(prop, defaultValue) {
-        return function(arg) {
-            var self = this,
-                item = Item(self);
+    proto.repeat = blockFunc('R', 0);
+    proto.each = blockFunc('E', []);
+    proto.test = blockFunc('T', false);
+    proto.choose = function() {
+        var self = this,
+            item = Item(self, function() { skip = undefined; }),
+            skip,
+            choose = {},
+            condFunc = function(isOtherwise/**/, val) {
+                return function(test) {
+                    val = blockFunc('T').call(self, function() {
+                        return (!skip && (isOtherwise || (isFunction(test) ? test.apply(item.A.P, curArgs) : test))) ?
+                            (skip = true)
+                            :
+                            false;
+                    });
+                    val.c.e = choose;
+                    return val;
+                };
+            };
 
-            item[prop] = arg === undefined ? defaultValue : arg;
+        item['T'] = true;
+        self.c = item;
 
-            self.c = item;
+        choose.when = condFunc();
+        choose.otherwise = condFunc(true);
+        choose.end = function(num) { return proto.end.call(self, num); };
 
-            return self;
-        }
+        return choose;
     };
-
-    proto.repeat = i('R', 0);
-    proto.each = i('E', []);
-    proto.test = i('T', false);
 
     // Shortcuts for popular tags, to use .div() instead of .elem('div').
     for (i = 0; i < tags.length; i++) {
@@ -221,23 +258,22 @@
 
     i.define = i = function(name, func) {
         proto[name] = function() {
-            var self = this,
-                args = arguments,
-                item = Item(self, function() {
-                    func.call(item.A.P, curArgs[0], curArgs[1], args);
+            var args = arguments,
+                item = Item(this, function() {
+                    func.call(item.A.P, curArgs[0], curArgs[1], curArgs[2], args);
                 });
 
-            return self;
+            return this;
         }
     };
 
     // We're inside and we have an access to curArgs variable which is
     // [index, item], so we will use curArgs to shorten the code.
-    i('act', function(index, item, args) {
+    i('act', function(item, index, arr, args) {
         args[0].apply(this, curArgs);
     });
 
-    i('text', function(index, item, args, /**/text) {
+    i('text', function(item, index, arr, args, /**/text) {
         text = args[0];
         text = isFunction(text) ? text.apply(this, curArgs) : text;
 

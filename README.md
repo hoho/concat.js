@@ -62,7 +62,7 @@ Return value is an array of memorized results (see below). If `parentNode` is un
         .end()
         .each([9, 8, 7])
             .p()
-                .text(function(index, item) {
+                .text(function(item, index, arr) {
                     // _index_ is .each() array index, _item_ is the array element.
                     return index + ' ' + item;
                 })
@@ -72,8 +72,13 @@ Return value is an array of memorized results (see below). If `parentNode` is un
                     .end()
                 .end()
                 .div()
-                    .text(function(index, item) { return index + ' ' + item; })
+                    .text(function(item, index, arr) { return index + ' ' + item; })
         .end(3)
+        .choose()
+            .when(false).text('1111').end()
+            .when(true).text('2222').end()
+            .otherwise().text('3333').end()
+        .end()
     .end();
 
 **Will append the following to `<body>` tag:**
@@ -116,12 +121,13 @@ Return value is an array of memorized results (see below). If `parentNode` is un
         <div>1</div>
         <div>2 7</div>
     </p>
+    2222
 
 ## Define custom actions
 
 You can define custom actions for build process. For example, if you use jQuery, you can define an action for event handlers binding like below:
 
-    $C.define('on', function(index, item, args) {
+    $C.define('on', function(item, index, arr, args) {
         $.fn.on.apply($(this), args);
     });
 
@@ -143,7 +149,7 @@ On every step of DOM building, we can memorize nodes and other data. An array of
         .end()
         .each([11, 22])
             .span()
-                .mem(function(index, item) {
+                .mem(function(item, index, arr) {
                     return index + ' ' + item + ' ' + this.tagName.toLowerCase();
                 })
             .end()

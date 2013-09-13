@@ -1,3 +1,7 @@
+function arrayToString(arr) {
+    return arr === undefined ? 'undefined' : '[' + arr + ']';
+}
+
 function domToArray(node) {
     var ret = [], i, j, n, attr, a, tmp;
 
@@ -132,8 +136,8 @@ test('concat.js callback context', function() {
     var container = document.getElementById('container'),
         acts = [];
 
-    var callback = function(index, item) { return "'" + index + ' ' + item + ' ' + this.tagName.toLowerCase() + "'"; },
-        actcallback = function(index, item) { acts.push(index + ' ' + item + ' ' + (this.tagName || 'fragment').toLowerCase()) };
+    var callback = function(item, index, arr) { return "'" + index + ' ' + item + ' ' + arrayToString(arr) + ' ' + (this.tagName || 'fragment').toLowerCase() + "'"; },
+        actcallback = function(item, index, arr) { acts.push(index + ' ' + item + ' ' + arrayToString(arr) + ' ' + (this.tagName || 'fragment').toLowerCase()) };
 
     $C(container, true)
         .elem('h1')
@@ -144,7 +148,7 @@ test('concat.js callback context', function() {
                 .test(true)
                     .br({test: callback}, true)
                 .end()
-                .test(function(index, item) { actcallback.call(this, index, item); return true; })
+                .test(function(item, index, arr) { actcallback.call(this, item, index, arr); return true; })
                     .br({test: callback}, true)
                 .end()
             .end()
@@ -171,6 +175,12 @@ test('concat.js callback context', function() {
                     .act(actcallback)
                     .text(callback)
                 .end()
+                .choose()
+                    .when(callback)
+                        .text('oooo')
+                        .act(actcallback)
+                    .end()
+                .end()
             .end()
         .end()
     .end();
@@ -179,74 +189,78 @@ test('concat.js callback context', function() {
         {name: 'h1', children: [
             'hello',
             ' world',
-            {name: 'br', attr: {test: "'0 777 br'"}, children: []},
-            {name: 'br', attr: {test: "'0 777 br'"}, children: []}
+            {name: 'br', attr: {test: "'0 777 [777] br'"}, children: []},
+            {name: 'br', attr: {test: "'0 777 [777] br'"}, children: []}
         ]},
         {name: 'span', children: [
-            {name: 'b', attr: {test: "'0 undefined b'", style: "content: 0 undefined b"}, children: ["'0 undefined b'"]},
-            {name: 'b', attr: {test: "'1 undefined b'", style: "content: 1 undefined b"}, children: ["'1 undefined b'"]},
-            {name: 'b', attr: {test: "'2 undefined b'", style: "content: 2 undefined b"}, children: ["'2 undefined b'"]},
-            {name: 'u', attr: {style: "content: 0 aa u"}, children: ["'0 aa u'"]},
-            {name: 'b', attr: {test: "'0 undefined b'", style: "content: 0 undefined b"}, children: ["'0 undefined b'"]},
-            {name: 'b', attr: {test: "'1 undefined b'", style: "content: 1 undefined b"}, children: ["'1 undefined b'"]},
-            {name: 'b', attr: {test: "'2 undefined b'", style: "content: 2 undefined b"}, children: ["'2 undefined b'"]},
-            {name: 'u', attr: {style: "content: 1 bb u"}, children: ["'1 bb u'"]},
-            {name: 'i', children: ["'0 undefined i'"]}
+            {name: 'b', attr: {test: "'undefined 0 undefined b'", style: "content: undefined 0 undefined b"}, children: ["'undefined 0 undefined b'"]},
+            {name: 'b', attr: {test: "'undefined 1 undefined b'", style: "content: undefined 1 undefined b"}, children: ["'undefined 1 undefined b'"]},
+            {name: 'b', attr: {test: "'undefined 2 undefined b'", style: "content: undefined 2 undefined b"}, children: ["'undefined 2 undefined b'"]},
+            {name: 'u', attr: {style: "content: 0 aa [aa,bb] u"}, children: ["'0 aa [aa,bb] u'"]},
+            {name: 'b', attr: {test: "'undefined 0 undefined b'", style: "content: undefined 0 undefined b"}, children: ["'undefined 0 undefined b'"]},
+            {name: 'b', attr: {test: "'undefined 1 undefined b'", style: "content: undefined 1 undefined b"}, children: ["'undefined 1 undefined b'"]},
+            {name: 'b', attr: {test: "'undefined 2 undefined b'", style: "content: undefined 2 undefined b"}, children: ["'undefined 2 undefined b'"]},
+            {name: 'u', attr: {style: "content: 1 bb [aa,bb] u"}, children: ["'1 bb [aa,bb] u'"]},
+            {name: 'i', children: ["'undefined 0 undefined i'"]},
+            'oooo'
         ]},
         {name: 'span', children: [
-            {name: 'b', attr: {test: "'0 undefined b'", style: "content: 0 undefined b"}, children: ["'0 undefined b'"]},
-            {name: 'b', attr: {test: "'1 undefined b'", style: "content: 1 undefined b"}, children: ["'1 undefined b'"]},
-            {name: 'b', attr: {test: "'2 undefined b'", style: "content: 2 undefined b"}, children: ["'2 undefined b'"]},
-            {name: 'u', attr: {style: "content: 0 aa u"}, children: ["'0 aa u'"]},
-            {name: 'b', attr: {test: "'0 undefined b'", style: "content: 0 undefined b"}, children: ["'0 undefined b'"]},
-            {name: 'b', attr: {test: "'1 undefined b'", style: "content: 1 undefined b"}, children: ["'1 undefined b'"]},
-            {name: 'b', attr: {test: "'2 undefined b'", style: "content: 2 undefined b"}, children: ["'2 undefined b'"]},
-            {name: 'u', attr: {style: "content: 1 bb u"}, children: ["'1 bb u'"]},
-            {name: 'i', children: ["'1 undefined i'"]}
+            {name: 'b', attr: {test: "'undefined 0 undefined b'", style: "content: undefined 0 undefined b"}, children: ["'undefined 0 undefined b'"]},
+            {name: 'b', attr: {test: "'undefined 1 undefined b'", style: "content: undefined 1 undefined b"}, children: ["'undefined 1 undefined b'"]},
+            {name: 'b', attr: {test: "'undefined 2 undefined b'", style: "content: undefined 2 undefined b"}, children: ["'undefined 2 undefined b'"]},
+            {name: 'u', attr: {style: "content: 0 aa [aa,bb] u"}, children: ["'0 aa [aa,bb] u'"]},
+            {name: 'b', attr: {test: "'undefined 0 undefined b'", style: "content: undefined 0 undefined b"}, children: ["'undefined 0 undefined b'"]},
+            {name: 'b', attr: {test: "'undefined 1 undefined b'", style: "content: undefined 1 undefined b"}, children: ["'undefined 1 undefined b'"]},
+            {name: 'b', attr: {test: "'undefined 2 undefined b'", style: "content: undefined 2 undefined b"}, children: ["'undefined 2 undefined b'"]},
+            {name: 'u', attr: {style: "content: 1 bb [aa,bb] u"}, children: ["'1 bb [aa,bb] u'"]},
+            {name: 'i', children: ["'undefined 1 undefined i'"]},
+            'oooo'
         ]}
     ]);
 
     deepEqual(acts, [
-        'undefined undefined h1',
-        '0 777 h1',
-        '0 undefined fragment',
-        '0 undefined b',
-        '0 undefined span',
-        '1 undefined b',
-        '1 undefined span',
-        '2 undefined b',
-        '2 undefined span',
-        '0 aa span',
-        '0 aa u',
-        '0 undefined b',
-        '0 undefined span',
-        '1 undefined b',
-        '1 undefined span',
-        '2 undefined b',
-        '2 undefined span',
-        '1 bb span',
-        '1 bb u',
-        '0 undefined span',
-        '0 undefined i',
-        '1 undefined fragment',
-        '0 undefined b',
-        '0 undefined span',
-        '1 undefined b',
-        '1 undefined span',
-        '2 undefined b',
-        '2 undefined span',
-        '0 aa span',
-        '0 aa u',
-        '0 undefined b',
-        '0 undefined span',
-        '1 undefined b',
-        '1 undefined span',
-        '2 undefined b',
-        '2 undefined span',
-        '1 bb span',
-        '1 bb u',
-        '1 undefined span',
-        '1 undefined i'
+        'undefined undefined undefined h1',
+        '0 777 [777] h1',
+        'undefined 0 undefined fragment',
+        'undefined 0 undefined b',
+        'undefined 0 undefined span',
+        'undefined 1 undefined b',
+        'undefined 1 undefined span',
+        'undefined 2 undefined b',
+        'undefined 2 undefined span',
+        '0 aa [aa,bb] span',
+        '0 aa [aa,bb] u',
+        'undefined 0 undefined b',
+        'undefined 0 undefined span',
+        'undefined 1 undefined b',
+        'undefined 1 undefined span',
+        'undefined 2 undefined b',
+        'undefined 2 undefined span',
+        '1 bb [aa,bb] span',
+        '1 bb [aa,bb] u',
+        'undefined 0 undefined span',
+        'undefined 0 undefined i',
+        'undefined 0 undefined span',
+        'undefined 1 undefined fragment',
+        'undefined 0 undefined b',
+        'undefined 0 undefined span',
+        'undefined 1 undefined b',
+        'undefined 1 undefined span',
+        'undefined 2 undefined b',
+        'undefined 2 undefined span',
+        '0 aa [aa,bb] span',
+        '0 aa [aa,bb] u',
+        'undefined 0 undefined b',
+        'undefined 0 undefined span',
+        'undefined 1 undefined b',
+        'undefined 1 undefined span',
+        'undefined 2 undefined b',
+        'undefined 2 undefined span',
+        '1 bb [aa,bb] span',
+        '1 bb [aa,bb] u',
+        'undefined 1 undefined span',
+        'undefined 1 undefined i',
+        'undefined 1 undefined span'
     ]);
 
     container.innerHTML = '';
@@ -283,14 +297,14 @@ test('concat.js complex test', function() {
         .br({'class': 'auch'}, true)
         .each([9, 8, 7])
             .p({style: {'background-color': function() { return this.tagName.toLowerCase() + 'urple'; }, height: '100px'}})
-                .text(function(index, item) { return index + ' ' + item; })
+                .text(function(item, index, arr) { return index + ' ' + item + ' ' + arrayToString(arr); })
                 .repeat(2)
                     .div()
                         .text(function(index) { return index; })
                     .end()
                 .end()
                 .div()
-                    .text(function(index, item) { return index + ' ' + item; })
+                    .text(function(item, index, arr) { return index + ' ' + item + ' ' + arrayToString(arr); })
         .end(3)
         .test(true)
             .br({test: 'ololo'}, true)
@@ -303,6 +317,35 @@ test('concat.js complex test', function() {
         .end()
         .test(function() { return true; })
             .br({test: 'ololo4'}, true)
+        .end()
+        .div()
+            .choose()
+                .when(true).p().text('123').end().end()
+                .when(true).p().text('234').end(2)
+                .otherwise().p().text('345')
+        .end(4)
+        .div()
+            .choose()
+                .when(false).p().text('456').end(2)
+                .when(false).p().text('567').end().end()
+            .end()
+            .choose()
+                .when(false).p().text('678').end(2)
+                .when(false).p().text('789').end().end()
+                .otherwise().p().text('890').end().end()
+            .end()
+            .choose()
+                .when(false).p().text('901').end().end()
+                .when(true).p().text('012').end().end()
+                .otherwise().p().text('123').end().end()
+            .end()
+        .end()
+        .choose()
+        .end()
+        .choose()
+            .when().text('ahahahaha').end()
+            .when(false).text('ohohohoho').end()
+            .when(true).text('uhuhuhuhu').end()
         .end()
     .end();
 
@@ -326,25 +369,33 @@ test('concat.js complex test', function() {
         {name: 'hr', children: []},
         {name: 'br', attr: {'class': 'auch'}, children: []},
         {name: 'p', attr: {style: 'background-color: purple; height: 100px'}, children: [
-            '0 9',
+            '0 9 [9,8,7]',
             {name: 'div', children: ['0']},
             {name: 'div', children: ['1']},
-            {name: 'div', children: ['0 9']}
+            {name: 'div', children: ['0 9 [9,8,7]']}
         ]},
         {name: 'p', attr: {style: 'background-color: purple; height: 100px'}, children: [
-            '1 8',
+            '1 8 [9,8,7]',
             {name: 'div', children: ['0']},
             {name: 'div', children: ['1']},
-            {name: 'div', children: ['1 8']}
+            {name: 'div', children: ['1 8 [9,8,7]']}
         ]},
         {name: 'p', attr: {style: 'background-color: purple; height: 100px'}, children: [
-            '2 7',
+            '2 7 [9,8,7]',
             {name: 'div', children: ['0']},
             {name: 'div', children: ['1']},
-            {name: 'div', children: ['2 7']}
+            {name: 'div', children: ['2 7 [9,8,7]']}
         ]},
         {name: 'br', attr: {test: 'ololo'}, children: []},
-        {name: 'br', attr: {test: 'ololo4'}, children: []}
+        {name: 'br', attr: {test: 'ololo4'}, children: []},
+        {name: 'div', children: [
+            {name: 'p', children: ['123']}
+        ]},
+        {name: 'div', children: [
+            {name: 'p', children: ['890']},
+            {name: 'p', children: ['012']}
+        ]},
+        'uhuhuhuhu'
     ]);
 
     container.innerHTML = '';
@@ -376,9 +427,9 @@ test('concat.js noFragment test', function() {
 test('concat.js define test', function() {
     var actual = [];
 
-    $C.define('ololo', function(index, item, args) {
+    $C.define('ololo', function(item, index, arr, args) {
         args = Array.prototype.slice.call(args, 0);
-        actual.push("'" + index + ' ' + item + ' ' + args + ' ' + this.tagName.toLowerCase() + "'");
+        actual.push("'" + index + ' ' + item + ' ' + arrayToString(arr) + ' ' + args + ' ' + this.tagName.toLowerCase() + "'");
     });
 
     $C()
@@ -408,24 +459,24 @@ test('concat.js define test', function() {
     .end();
 
     deepEqual(actual, [
-        "'undefined undefined a,b,c div'",
-        "'undefined undefined d,e,f div'",
-        "'undefined undefined g,h,i span'",
-        "'0 undefined j,k,l a'",
-        "'1 undefined j,k,l a'",
-        "'2 undefined j,k,l a'",
-        "'0 111 m,n,o section'",
-        "'0 11111 p,q,r p'",
-        "'1 22222 p,q,r p'",
-        "'0 111 s,t,u section'",
-        "'1 222 m,n,o section'",
-        "'0 11111 p,q,r p'",
-        "'1 22222 p,q,r p'",
-        "'1 222 s,t,u section'",
-        "'2 333 m,n,o section'",
-        "'0 11111 p,q,r p'",
-        "'1 22222 p,q,r p'",
-        "'2 333 s,t,u section'"
+        "'undefined undefined undefined a,b,c div'",
+        "'undefined undefined undefined d,e,f div'",
+        "'undefined undefined undefined g,h,i span'",
+        "'undefined 0 undefined j,k,l a'",
+        "'undefined 1 undefined j,k,l a'",
+        "'undefined 2 undefined j,k,l a'",
+        "'0 111 [111,222,333] m,n,o section'",
+        "'0 11111 [11111,22222] p,q,r p'",
+        "'1 22222 [11111,22222] p,q,r p'",
+        "'0 111 [111,222,333] s,t,u section'",
+        "'1 222 [111,222,333] m,n,o section'",
+        "'0 11111 [11111,22222] p,q,r p'",
+        "'1 22222 [11111,22222] p,q,r p'",
+        "'1 222 [111,222,333] s,t,u section'",
+        "'2 333 [111,222,333] m,n,o section'",
+        "'0 11111 [11111,22222] p,q,r p'",
+        "'1 22222 [11111,22222] p,q,r p'",
+        "'2 333 [111,222,333] s,t,u section'"
     ]);
 });
 
@@ -440,13 +491,13 @@ test('concat.js ret test', function() {
         .end()
         .span()
             .mem()
-            .mem(function(index, item) { return 'hehe'; })
+            .mem(function(item, index, arr) { return 'hehe'; })
         .end()
         .each([22, 33])
             .p()
                 .mem()
                 .text('ho')
-                .mem(function(index, item) { return "'" + index + ' ' + item + ' ' + this.tagName.toLowerCase() + "'"; })
+                .mem(function(item, index, arr) { return "'" + index + ' ' + item + ' ' + arrayToString(arr) + ' ' + this.tagName.toLowerCase() + "'"; })
             .end()
         .end()
     .end();
@@ -463,9 +514,9 @@ test('concat.js ret test', function() {
     deepEqual(tmp[1].tagName.toLowerCase(), 'span');
     deepEqual(tmp[2], 'hehe');
     deepEqual(tmp[3].tagName.toLowerCase(), 'p');
-    deepEqual(tmp[4], "'0 22 p'");
+    deepEqual(tmp[4], "'0 22 [22,33] p'");
     deepEqual(tmp[5].tagName.toLowerCase(), 'p');
-    deepEqual(tmp[6], "'1 33 p'");
+    deepEqual(tmp[6], "'1 33 [22,33] p'");
 
     tmp = $C()
         .mem(function() { return 'zzz'; })
