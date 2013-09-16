@@ -347,6 +347,11 @@ test('concat.js complex test', function() {
             .when(false).text('ohohohoho').end()
             .when(true).text('uhuhuhuhu').end()
         .end()
+        .repeat(2)
+            .each(function(index) { return ['aaa' + index, 'ooo' + (index + 1)]; })
+                .text(function(item, index, arr) { return index + ' ' + item + ' ' + arrayToString(arr); })
+            .end()
+        .end()
     .end();
 
     domEqual(domToArray(container), [
@@ -395,7 +400,11 @@ test('concat.js complex test', function() {
             {name: 'p', children: ['890']},
             {name: 'p', children: ['012']}
         ]},
-        'uhuhuhuhu'
+        'uhuhuhuhu',
+        '0 aaa0 [aaa0,ooo1]',
+        '1 ooo1 [aaa0,ooo1]',
+        '0 aaa1 [aaa1,ooo2]',
+        '1 ooo2 [aaa1,ooo2]'
     ]);
 
     container.innerHTML = '';

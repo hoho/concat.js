@@ -1,5 +1,5 @@
 /*!
- * concat.js v0.5.0, https://github.com/hoho/concat.js
+ * concat.js v0.5.1, https://github.com/hoho/concat.js
  * Copyright 2013 Marat Abdullin
  * Released under the MIT license
  */
@@ -63,7 +63,10 @@
                 var R, i, j, oldArgs = curArgs, oldEachArray = eachArray;
 
                 if (item.E !== undefined) {
-                    eachArray = item.E;
+                    eachArray = isFunction(item.E) ?
+                        item.E.apply(item.A.P, curArgs)
+                        :
+                        item.E;
                     curArgs = [undefined, -1, eachArray];
 
                     R = function() {
