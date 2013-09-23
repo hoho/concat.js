@@ -307,7 +307,11 @@ test('concat.js complex test', function() {
                     .text(function(item, index, arr) { return index + ' ' + item + ' ' + arrayToString(arr); })
         .end(3)
         .test(true)
-            .br({test: 'ololo'}, true)
+            .br({test: 'ololo'})
+                .each([88, 99])
+                    .attr(function(item) { return 'hoho' + item; },
+                          function(item, index) { return 'hahaha' + index; })
+            .end(2)
         .end()
         .test(false)
             .br({test: 'ololo2'}, true)
@@ -391,7 +395,7 @@ test('concat.js complex test', function() {
             {name: 'div', children: ['1']},
             {name: 'div', children: ['2 7 [9,8,7]']}
         ]},
-        {name: 'br', attr: {test: 'ololo'}, children: []},
+        {name: 'br', attr: {test: 'ololo', hoho88: 'hahaha0', hoho99: 'hahaha1'}, children: []},
         {name: 'br', attr: {test: 'ololo4'}, children: []},
         {name: 'div', children: [
             {name: 'p', children: ['123']}

@@ -811,8 +811,8 @@ var concatizerCompile;
 
         ret = ret.join('');
 
-
         console.log(ret);
+
         try {
             eval(ret);
         } catch (e) {

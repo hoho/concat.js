@@ -1,5 +1,5 @@
 /*!
- * concat.js v0.5.1, https://github.com/hoho/concat.js
+ * concat.js v0.5.2, https://github.com/hoho/concat.js
  * Copyright 2013 Marat Abdullin
  * Released under the MIT license
  */
@@ -8,6 +8,8 @@
     // a bit hard to read. But it is quite short anyway.
 
     var tags = 'div|span|p|a|ul|ol|li|table|tr|td|th|br|img|b|i|s|u'.split('|'),
+        appendChildString = 'appendChild',
+        applyString = 'apply',
         proto,
         i,
         curArgs = [], eachArray,
@@ -64,7 +66,7 @@
 
                 if (item.E !== undefined) {
                     eachArray = isFunction(item.E) ?
-                        item.E.apply(item.A.P, curArgs)
+                        item.E[applyString](item.A.P, curArgs)
                         :
                         item.E;
                     curArgs = [undefined, -1, eachArray];
@@ -87,7 +89,7 @@
                     };
                 } else {
                     i = isFunction(item.T) ?
-                        (item.T.apply(item.A.P, curArgs) ? 1 : 0)
+                        (item.T[applyString](item.A.P, curArgs) ? 1 : 0)
                         :
                         (item.T === undefined) || item.T ? 1 : 0;
                 }
@@ -145,7 +147,7 @@
                         i.p.innerHTML = '';
                     }
 
-                    i.p.appendChild(r.P);
+                    i.p[appendChildString](r.P);
                 }
             } else {
                 self.m.unshift(r.P);
@@ -161,7 +163,7 @@
 
                     for (i in attr) {
                         if (isFunction((a = attr[i]))) {
-                            a = a.apply(elem, curArgs);
+                            a = a[applyString](elem, curArgs);
                         }
 
                         if (a !== undefined) {
@@ -171,7 +173,7 @@
 
                                     for (prop in a) {
                                         if (isFunction((tmp = a[prop]))) {
-                                            tmp = tmp.apply(elem, curArgs);
+                                            tmp = tmp[applyString](elem, curArgs);
                                         }
 
                                         if (tmp !== undefined) {
@@ -191,7 +193,7 @@
                         }
                     }
 
-                    item.A.P.appendChild(elem);
+                    item.A.P[appendChildString](elem);
                 });
 
             self.c = item;
@@ -208,7 +210,7 @@
             var self = this,
                 item = Item(self, function(parentElem) {
                     parentElem = item.A.P;
-                    self.m.push(isFunction(func) ? func.apply(parentElem, curArgs) : parentElem);
+                    self.m.push(isFunction(func) ? func[applyString](parentElem, curArgs) : parentElem);
                 });
 
             return self;
@@ -226,7 +228,7 @@
             condFunc = function(isOtherwise/**/, val) {
                 return function(test) {
                     val = blockFunc('T').call(self, function() {
-                        return (!skip && (isOtherwise || (isFunction(test) ? test.apply(item.A.P, curArgs) : test))) ?
+                        return (!skip && (isOtherwise || (isFunction(test) ? test[applyString](item.A.P, curArgs) : test))) ?
                             (skip = true)
                             :
                             false;
@@ -273,16 +275,23 @@
     // We're inside and we have an access to curArgs variable which is
     // [index, item], so we will use curArgs to shorten the code.
     i('act', function(item, index, arr, args) {
-        args[0].apply(this, curArgs);
+        args[0][applyString](this, curArgs);
     });
 
-    i('text', function(item, index, arr, args, /**/text) {
+    i('text', function(item, index, arr, args/**/, text) {
         text = args[0];
-        text = isFunction(text) ? text.apply(this, curArgs) : text;
+        text = isFunction(text) ? text[applyString](this, curArgs) : text;
 
         if (text !== undefined) {
-            this.appendChild(document.createTextNode(text));
+            this[appendChildString](document.createTextNode(text));
         }
 
+    });
+
+    i('attr', function(item, index, arr, args/**/, self, name, val) {
+        (self = this).setAttribute(
+            isFunction((name = args[0])) ? name.call(self, item, index, arr) : name,
+            isFunction((val = args[1])) ? val.call(self, item, index, arr) : val
+        );
     });
 })(document);
