@@ -607,6 +607,24 @@ var concatizerCompile;
 
                 break;
 
+            case 'CALL':
+                break;
+
+            case 'CURR':
+                if (line.substring(i, i + 7) === 'CURRENT') {
+                    i = skipWhitespaces(line, i + 7);
+                    if (i < line.length) {
+                        concatizerErrorUnexpectedSymbol(index + 1, i + 1, line[i]);
+                    }
+
+                    addIndent(ret, stack.length);
+                    ret.push('.text(function(item) { return item; })\n');
+
+                    break;
+                }
+
+            default:
+                concatizerError(index + 1, i + 1, 'Unexpected command');
         }
 
         switch (cmd) {
@@ -676,7 +694,7 @@ var concatizerCompile;
 
 
     function concatizerProcess(text, index, stack, ret) {
-        var line = strip(text[index]); //.split(/\s+/);
+        var line = strip(text[index]);
 
         switch (line[0]) {
             case '"':
@@ -693,7 +711,6 @@ var concatizerCompile;
                 stack[stack.length - 1].end = true;
                 if (/[A-Z]/.test(line[0])) {
                     index = concatizerProcessCommand(text, index, stack, ret);
-//                    console.log(line);
                 } else {
                     concatizerProcessElement(text, index, stack, ret);
                 }
