@@ -10,3 +10,5 @@ function concatizerCompileScriptTags() {
         }
     }
 }
+
+concatizerCompileScriptTags();

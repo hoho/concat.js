@@ -7,7 +7,8 @@ var concatizerCompile;
         attrName = /^[a-zA-Z][a-zA-Z0-9-_]*$/g,
         _tags = 'div|span|p|a|ul|ol|li|table|tr|td|th|br|img|b|i|s|u'.split('|'),
         TAG_FUNCS = {},
-        i;
+        i,
+        indentWith = '    ';
 
     for (i = 0; i < _tags.length; i++) {
         TAG_FUNCS[_tags[i]] = true;
@@ -18,9 +19,25 @@ var concatizerCompile;
         return text.replace(/^\s+|\s+$/g, '');
     }
 
+    function addIndent(ret, size) {
+        ret.push((new Array(size)).join(indentWith));
+    }
+
+    function skipWhitespaces(str, col) {
+        while (col < str.length && whitespace.test(str[col])) {
+            col++;
+        }
+
+        return col;
+    }
+
 
     function concatizerError(line, col, message) {
         throw message + ' (line: ' + line + ', col: ' + col + ')';
+    }
+
+    function concatizerErrorUnexpectedSymbol(line, col, char) {
+        concatizerError(line, col, "Unexpected symbol '" + char + "'");
     }
 
 
@@ -123,26 +140,20 @@ var concatizerCompile;
 
                 i++;
 
-                while (i < selectorLength && whitespace.test(selector[i])) {
-                    i++;
-                }
+                i = skipWhitespaces(selector, i);
 
                 while (i < selectorLength && !whitespace.test(selector[i]) && selector[i] !== '=' && selector[i] !== closer) {
                     name.push(selector[i]);
                     i++;
                 }
 
-                while (i < selectorLength && whitespace.test(selector[i])) {
-                    i++;
-                }
+                i = skipWhitespaces(selector, i);
 
                 if (selector[i] === '=') {
                     i++;
                 }
 
-                while (i < selectorLength && whitespace.test(selector[i])) {
-                    i++;
-                }
+                i = skipWhitespaces(selector, i);
 
                 if (selector[i] !== closer) {
                     if (selector[i] === '"') {
@@ -189,16 +200,14 @@ var concatizerCompile;
                         }
                     }
 
-                    while (i < selectorLength && whitespace.test(selector[i])) {
-                        i++;
-                    }
+                    i = skipWhitespaces(selector, i);
                 }
 
                 if (selector[i] !== closer) {
                     if (i === selectorLength) {
                         concatizerError(line, i, 'Unterminated selector');
                     } else {
-                        concatizerError(line, i, "Unexpected symbol '" + selector[i] + "'");
+                        concatizerErrorUnexpectedSymbol(line, i + 1, selector[i]);
                     }
                 }
 
@@ -248,9 +257,7 @@ var concatizerCompile;
 
         i = 0;
 
-        while (i < selectorLength && whitespace.test(selector[i])) {
-            i++;
-        }
+        i = skipWhitespaces(selector, i);
 
         while (i < selectorLength) {
             switch (selector[i]) {
@@ -277,21 +284,17 @@ var concatizerCompile;
 
                     bemElem = [];
 
-                    while (i < selectorLength && whitespace.test(selector[i])) {
-                        i++;
-                    }
+                    i = skipWhitespaces(selector, i);
 
                     while (i < selectorLength && !whitespace.test(selector[i]) && selector[i] !== ')') {
                         bemElem.push(selector[i]);
                         i++;
                     }
 
-                    while (i < selectorLength && whitespace.test(selector[i])) {
-                        i++;
-                    }
+                    i = skipWhitespaces(selector, i);
 
                     if (selector[i] !== ')') {
-                        concatizerError(line, i, "Unexpected symbol '" + selector[i] + "'");
+                        concatizerErrorUnexpectedSymbol(line, i + 1, selector[i]);
                     }
 
                     i++;
@@ -415,68 +418,89 @@ var concatizerCompile;
             inString,
             brackets;
 
-        while (i < line.length && whitespace.test(line[i])) {
-            i++;
-        }
+        i = skipWhitespaces(line, i);
 
-        if (line[i] !== '(') {
-            concatizerError(index + 1, i + 1, "Illegal symbol '" + line[i] + "'");
-        }
+        if (line[i] === '"' || line[i] === "'") {
+            inString = line[i];
+            expr.push(line[i++]);
 
-        i++;
-        brackets = 1;
-
-        while (brackets > 0 && i < line.length) {
-            if (!inString) {
-                if (line[i] === '(') {
-                    brackets++;
-                } else if (line[i] === ')') {
-                    brackets--;
-
-                    if (brackets === 0) {
-                        i++;
-                        break;
-                    }
-                } else if (line[i] === '"' || line[i] === "'") {
-                    inString = line[i];
-                }
-            } else {
+            while (i < line.length && inString) {
                 if (line[i] === inString && line[i - 1] !== '\\') {
                     inString = false;
                 }
+
+                expr.push(line[i++]);
             }
 
-            expr.push(line[i]);
+            if (inString) {
+                concatizerError(index + 1, i + 1, 'Unterminated string');
+            }
+
+            i = skipWhitespaces(line, i);
+
+            if (i < line.length) {
+                concatizerErrorUnexpectedSymbol(index + 1, i + 1, line[i]);
+            }
+
+            return {index: index, col: i, expr: expr.join('')};
+        } else {
+            if (line[i] !== '(') {
+                concatizerError(index + 1, i + 1, "Illegal symbol '" + line[i] + "'");
+            }
 
             i++;
+            brackets = 1;
 
-            if (i === line.length) {
-                index++;
+            while (brackets > 0 && i < line.length) {
+                if (!inString) {
+                    if (line[i] === '(') {
+                        brackets++;
+                    } else if (line[i] === ')') {
+                        brackets--;
 
-                while (index < text.length && !text[index]) {
-                    index++;
-                }
-
-                if (index < text.length) {
-                    line = text[index];
-                    i = 0;
+                        if (brackets === 0) {
+                            i++;
+                            break;
+                        }
+                    } else if (line[i] === '"' || line[i] === "'") {
+                        inString = line[i];
+                    }
                 } else {
-                    concatizerError(index + 1, 1, 'Unterminated expression');
+                    if (line[i] === inString && line[i - 1] !== '\\') {
+                        inString = false;
+                    }
+                }
+
+                expr.push(line[i]);
+
+                i++;
+
+                if (i === line.length) {
+                    index++;
+
+                    while (index < text.length && !text[index]) {
+                        index++;
+                    }
+
+                    if (index < text.length) {
+                        line = text[index];
+                        i = 0;
+                    } else {
+                        concatizerError(index + 1, 1, 'Unterminated expression');
+                    }
                 }
             }
+
+            expr = strip(expr.join(''));
+
+            i = skipWhitespaces(line, i);
+
+            if (expr.substring(0, 8) !== 'function') {
+                expr = 'function() { return (' + expr + '); }';
+            }
+
+            return {index: index, col: i, expr: expr};
         }
-
-        expr = strip(expr.join(''));
-
-        while (i < line.length && whitespace.test(line[i])) {
-            i++;
-        }
-
-        if (expr.substring(0, 8) !== 'function') {
-            expr = 'function() { return (' + expr + '); }';
-        }
-
-        return {index: index, col: i, expr: expr};
     }
 
 
@@ -490,12 +514,10 @@ var concatizerCompile;
 
         i = 0;
 
-        while (i < line.length && whitespace.test(line[i])) {
-            i++;
-        }
+        i = skipWhitespaces(line, i);
 
         if (line[i] !== '@') {
-            concatizerError(index + 1, i + 1, "Unexpected symbol '" + line[i] + "'");
+            concatizerErrorUnexpectedSymbol(index + 1, i + 1, line[i]);
         }
 
         i++;
@@ -511,27 +533,30 @@ var concatizerCompile;
             concatizerError(index + 1, i + 1, "Illegal attribute name '" + name + "'");
         }
 
-        while (i < line.length && whitespace.test(line[i])) {
-            i++;
+        i = skipWhitespaces(line, i);
+
+        val = concatizerExtractExpression(text, index, i);
+        index = val.index;
+        val = val.expr;
+
+        if (index < text.length) {
+            line = text[index];
+            i = skipWhitespaces(line, val.col);
+
+            if (i < line.length) {
+                concatizerErrorUnexpectedSymbol(index + 1, i + 1, line[i]);
+            }
         }
 
-        if (line[i] === '"') {
-            val = line.substring(i);
-        } else if (line[i] === '(') {
-            val = concatizerExtractExpression(text, index, i);
-            index = val.index;
-            val = val.expr;
-        } else {
-            concatizerError(index + 1, i + 1, "Unexpected symbol '" + line[i] + "'");
-        }
-
-        ret.push(".attr('" + name + "', " + val + ')');
+        addIndent(ret, stack.length);
+        ret.push(".attr('" + name + "', " + val + ')\n');
 
         return index;
     }
 
     function concatizerProcessText(text, index, stack, ret) {
-        ret.push('.text(' + strip(text[index]) + ')');
+        addIndent(ret, stack.length);
+        ret.push('.text(' + strip(text[index]) + ')\n');
     }
 
     function concatizerProcessTextExpression(text, index, stack, ret) {
@@ -540,12 +565,13 @@ var concatizerCompile;
         index = expr.index;
 
         if (expr.col < text[index].length) {
-            concatizerError(index + 1, expr.col + 1, "Unexpected symbol '" + text[index][expr.col] + "'");
+            concatizerErrorUnexpectedSymbol(index + 1, expr.col + 1, text[index][expr.col]);
         }
 
+        addIndent(ret, stack.length);
         ret.push('.text(');
         ret.push(expr.expr);
-        ret.push(')');
+        ret.push(')\n');
 
         stack[stack.length - 1].end = false;
 
@@ -553,7 +579,70 @@ var concatizerCompile;
     }
 
     function concatizerProcessCommand(text, index, stack, ret) {
+        var i = 0,
+            line = text[index],
+            cmd,
+            expr,
+            expr2;
+
         stack[stack.length - 1].end = false;
+
+        i = skipWhitespaces(line, i);
+
+        cmd = line.substring(i, i + 4);
+
+        switch (cmd) {
+            case 'TEST':
+            case 'EACH':
+            case 'ATTR':
+                expr = concatizerExtractExpression(text, index, i + 4);
+
+                index = expr.index;
+                i = expr.col;
+
+                if (index < text.length) {
+                    line = text[index];
+                    i = skipWhitespaces(line, i);
+                }
+
+                break;
+
+        }
+
+        switch (cmd) {
+            case 'TEST':
+            case 'EACH':
+                if (i < line.length) {
+                    concatizerErrorUnexpectedSymbol(index + 1, i + 1, line[i]);
+                }
+
+                addIndent(ret, stack.length);
+                ret.push((cmd === 'TEST' ? '.test(' : '.each(') + expr.expr + ')\n');
+                stack[stack.length - 1].end = true;
+
+                break;
+
+            case 'ATTR':
+                expr2 = concatizerExtractExpression(text, index, i);
+
+                index = expr2.index;
+                i = expr2.col;
+
+                if (index < text.length) {
+                    line = text[index];
+                    i = skipWhitespaces(line, i);
+                }
+
+                if (i < line.length) {
+                    concatizerErrorUnexpectedSymbol(index + 1, i + 1, line[i]);
+                }
+
+                addIndent(ret, stack.length);
+                ret.push('.attr(' + expr.expr + ', ' + expr2.expr + ')\n');
+
+                break;
+        }
+
         return index;
     }
 
@@ -565,6 +654,8 @@ var concatizerCompile;
         for (hasAttr in elem.attr) {
             break;
         }
+
+        addIndent(ret, stack.length);
 
         if (elem.elem in TAG_FUNCS) {
             ret.push('.' + elem.elem + '(');
@@ -578,7 +669,7 @@ var concatizerCompile;
             ret.push(needComma + JSON.stringify(elem.attr));
         }
 
-        ret.push(')');
+        ret.push(')\n');
 
         stack[stack.length - 1].end = true;
     }
@@ -590,15 +681,12 @@ var concatizerCompile;
         switch (line[0]) {
             case '"':
             case "'":
-                concatizerProcessText(text, index, stack, ret);
+            case '(':
+                index = concatizerProcessTextExpression(text, index, stack, ret);
                 break;
 
             case '@':
                 index = concatizerProcessAtAttribute(text, index, stack, ret);
-                break;
-
-            case '(':
-                index = concatizerProcessTextExpression(text, index, stack, ret);
                 break;
 
             default:
@@ -661,10 +749,6 @@ var concatizerCompile;
             while (j <= stack[stack.length - 1].indent) {
                 k = stack.pop();
 
-                if (stack.length === 1) {
-                    ret.push('}');
-                }
-
                 if (k.end) {
                     ends++;
                 }
@@ -673,7 +757,8 @@ var concatizerCompile;
             }
 
             if (ends > 0) {
-                ret.push('.end(' + (ends > 1 ? ends : '') + ')');
+                addIndent(ret, stack.length + 1);
+                ret.push('.end(' + (ends > 1 ? ends : '') + ')\n');
             }
 
             if (k !== j) {
@@ -691,20 +776,57 @@ var concatizerCompile;
                     if (first) {
                         first = false;
                     } else {
-                        ret.push(', ');
+                        addIndent(ret, 1);
+                        ret.push('},\n');
                     }
 
                     line = strip(line).split(/\s+/);
                     ret.push('"' + line[0] + '": ');
                     line.shift();
-                    ret.push('function(' + line.join(', ') + ') {');
+                    ret.push('function(' + line.join(', ') + ') {\n');
+                    addIndent(ret, stack.length);
+                    ret.push('return $C()\n');
                 }
             }
         }
 
-        ret.push('}');
+        if (ret.length > 1) {
+            ends = 0;
 
-        console.log(ret.join(''));
+            while (stack.length > 2) {
+                stack.pop();
+                ends++;
+            }
+
+            if (ends > 0) {
+                addIndent(ret, 2);
+                ret.push('.end(' + (ends > 1 ? ends : '') + ')\n');
+            }
+
+            ret.push('}');
+        }
+
+        ret.push('}');
+        ret.unshift('ret = ');
+
+        ret = ret.join('');
+
+
+        console.log(ret);
+        try {
+            eval(ret);
+        } catch (e) {
+            console.log(ret);
+            throw e;
+        }
+
+        if (!$C.tpl) {
+            $C.tpl = {};
+        }
+
+        for (i in ret) {
+            $C.tpl[i] = ret[i];
+        }
     }
 
 })();
