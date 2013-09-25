@@ -693,10 +693,16 @@ var concatizerCompile;
 
                 ret.push('.act(function() {\n' + k + '$C.tpl.' + name + '({parent: this');
                 if (startIndex < index) {
-                    ret.push(', payload:\n' + k + indentWith + strip(concatizerCompile(undefined, startIndex, index)).split('\n').join('\n' + k));
+                    ret.push(', payload:\n' + k + indentWith + strip(concatizerCompile(undefined, startIndex, index + 1)).split('\n').join('\n' + k));
                     ret.push('[0]');
                 }
-                ret.push('},\n' + k + indentWith + (args.join(',\n' + k + indentWith)) + '\n' + k + ');\n')
+                ret.push('}');
+
+                if (args.length) {
+                    ret.push(',\n' + k + indentWith + (args.join(',\n' + k + indentWith)) + '\n' + k);
+                }
+
+                ret.push(');\n');
 
                 addIndent(ret, stack.length);
                 ret.push('})\n');
@@ -832,7 +838,7 @@ var concatizerCompile;
         prevMaxLine = maxLine;
         maxLine = singleFunctionTo ? singleFunctionTo : code.length;
 
-        for (i = singleFunctionFrom || 0; i <= maxLine; i++) {
+        for (i = singleFunctionFrom || 0; i < maxLine; i++) {
             line = code[i];
 
             if (!line) {
