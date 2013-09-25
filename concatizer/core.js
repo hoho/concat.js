@@ -10,7 +10,8 @@ var concatizerCompile;
         i,
         indentWith = '    ',
         source,
-        code;
+        code,
+        maxLine;
 
     for (i = 0; i < _tags.length; i++) {
         TAG_FUNCS[_tags[i]] = true;
@@ -39,8 +40,8 @@ var concatizerCompile;
               source[line] + '\n' + (new Array(col + 1).join(' ')) + '^';
     }
 
-    function concatizerErrorUnexpectedSymbol(line, col, char) {
-        concatizerError(line, col, "Unexpected symbol '" + char + "'");
+    function concatizerErrorUnexpectedSymbol(line, col, chr) {
+        concatizerError(line, col, "Unexpected symbol '" + chr + "'");
     }
 
 
@@ -414,7 +415,7 @@ var concatizerCompile;
     }
 
 
-    function concatizerExtractExpression(index, col) {
+    function concatizerExtractExpression(index, col, hasMore, noWrap) {
         var i = col,
             line = code[index],
             expr = [],
@@ -442,7 +443,7 @@ var concatizerCompile;
 
             i = skipWhitespaces(line, i);
 
-            if (i < line.length) {
+            if (i < line.length && !hasMore) {
                 concatizerErrorUnexpectedSymbol(index, i, line[i]);
             }
 
@@ -482,11 +483,11 @@ var concatizerCompile;
                 if (i === line.length) {
                     index++;
 
-                    while (index < code.length && !code[index]) {
+                    while (index < maxLine && !code[index]) {
                         index++;
                     }
 
-                    if (index < code.length) {
+                    if (index < maxLine) {
                         line = code[index];
                         i = 0;
                     } else {
@@ -497,10 +498,22 @@ var concatizerCompile;
 
             expr = strip(expr.join(''));
 
+            if (!expr) {
+                concatizerError(startIndex, col, 'Empty expression');
+            }
+
             i = skipWhitespaces(line, i);
 
             if (expr.substring(0, 8) !== 'function') {
-                expr = 'function() { return (' + expr + '); }';
+                if (noWrap) {
+                    expr = '(' + expr + ')';
+                } else {
+                    expr = 'function() { return (' + expr + '); }';
+                }
+            }
+
+            if (i < line.length && !hasMore) {
+                concatizerErrorUnexpectedSymbol(index, i, line[i]);
             }
 
             return {index: index, col: i, expr: expr};
@@ -543,15 +556,6 @@ var concatizerCompile;
         index = val.index;
         val = val.expr;
 
-        if (index < code.length) {
-            line = code[index];
-            i = skipWhitespaces(line, val.col);
-
-            if (i < line.length) {
-                concatizerErrorUnexpectedSymbol(index, i, line[i]);
-            }
-        }
-
         addIndent(ret, stack.length);
         ret.push(".attr('" + name + "', " + val + ')\n');
 
@@ -563,10 +567,6 @@ var concatizerCompile;
         var expr = concatizerExtractExpression(index, 0);
 
         index = expr.index;
-
-        if (expr.col < code[index].length) {
-            concatizerErrorUnexpectedSymbol(index, expr.col, code[index][expr.col]);
-        }
 
         addIndent(ret, stack.length);
         ret.push('.text(');
@@ -609,7 +609,9 @@ var concatizerCompile;
                         }
                     } else {
                         i += (cmd === 'CHOO' ? 6 : 9);
-                        concatizerErrorUnexpectedSymbol(index, i, line[i]);
+                        if (whitespace.test(line[i])) {
+                            concatizerErrorUnexpectedSymbol(index, i + 1, line[i + 1]);
+                        }
                     }
                 }
 
@@ -628,22 +630,76 @@ var concatizerCompile;
                     concatizerError(index, i + 4, 'Expression is expected');
                 }
 
-                expr = concatizerExtractExpression(index, i + 4);
+                expr = concatizerExtractExpression(index, i + 4, cmd === 'ATTR');
 
                 index = expr.index;
                 i = expr.col;
 
-                if (index < code.length) {
-                    line = code[index];
-                    i = skipWhitespaces(line, i);
-                }
-
                 break;
 
             case 'CALL':
+                var args = [],
+                    name = [],
+                    j,
+                    k,
+                    startIndex;
+
+                j = i;
+
+                i = skipWhitespaces(line, i + 4);
+
+                while (i < line.length && !whitespace.test(line[i])) {
+                    name.push(line[i]);
+                    i++;
+                }
+
+                if (!name.length) {
+                    concatizerError(index, i, 'No name');
+                }
+
+                name = name.join('');
+
+                i = skipWhitespaces(line, i);
+
+                while (i < line.length) {
+                    expr = concatizerExtractExpression(index, i, true, true);
+                    index = expr.index;
+                    i = expr.col;
+                    line = code[index];
+                    args.push(expr.expr);
+                }
+
+
+                startIndex = index;
+
+                index++;
+
+                while (index < maxLine) {
+                    line = code[index];
+                    if (strip(line)) {
+                        k = skipWhitespaces(line, 0);
+                        if (k <= j) {
+                            break;
+                        }
+                    }
+                    index++;
+                }
+
                 addIndent(ret, stack.length);
 
-                ret.push('.act(function() { $C.tpl[13]; })\n');
+                index--;
+
+                k = (new Array(stack.length + 1)).join(indentWith);
+
+                ret.push('.act(function() {\n' + k + '$C.tpl.' + name + '({parent: this');
+                if (startIndex < index) {
+                    ret.push(', payload:\n' + k + indentWith + strip(concatizerCompile(undefined, startIndex, index)).split('\n').join('\n' + k));
+                    ret.push('[0]');
+                }
+                ret.push('},\n' + k + indentWith + (args.join(',\n' + k + indentWith)) + '\n' + k + ');\n')
+
+                addIndent(ret, stack.length);
+                ret.push('})\n');
 
                 break;
 
@@ -661,7 +717,7 @@ var concatizerCompile;
                     if (cmd === 'CURRENT') {
                         ret.push('.text(function(item) { return item; })\n');
                     } else {
-                        ret.push('.act(function() { this.appendChild(PAYLOAD); })\n');
+                        ret.push('.act(function() { if (_.payload) { this.appendChild(_.payload); }})\n');
                     }
 
                     break;
@@ -675,10 +731,6 @@ var concatizerCompile;
             case 'TEST':
             case 'WHEN':
             case 'EACH':
-                if (i < line.length) {
-                    concatizerErrorUnexpectedSymbol(index, i, line[i]);
-                }
-
                 addIndent(ret, stack.length);
                 ret.push((cmd === 'TEST' ? '.test(' : cmd === 'EACH' ? '.each(' : '.when(') + expr.expr + ')\n');
                 stack[stack.length - 1].end = true;
@@ -690,15 +742,6 @@ var concatizerCompile;
 
                 index = expr2.index;
                 i = expr2.col;
-
-                if (index < code.length) {
-                    line = code[index];
-                    i = skipWhitespaces(line, i);
-                }
-
-                if (i < line.length) {
-                    concatizerErrorUnexpectedSymbol(index, i, line[i]);
-                }
 
                 addIndent(ret, stack.length);
                 ret.push('.attr(' + expr.expr + ', ' + expr2.expr + ')\n');
@@ -765,24 +808,31 @@ var concatizerCompile;
     }
 
 
-    concatizerCompile = function(src) {
-        source = src.split(/\n\r|\r\n|\r|\n/);
-        code = src.split(/\n\r|\r\n|\r|\n/);
+    concatizerCompile = function(src, singleFunctionFrom, singleFunctionTo) {
+        if (!singleFunctionFrom) {
+            source = src.split(/\n\r|\r\n|\r|\n/);
+            code = src.split(/\n\r|\r\n|\r|\n/);
 
-        concatizerClearComments();
+            concatizerClearComments();
+        }
 
-        var ret = ['{'],
+        var compiled = {},
+            curTpl,
+            ret = [],
             i,
             j,
             k,
             ends,
             line,
+            prevMaxLine,
             stack = [{indent: -1}],
             tabs,
-            spaces,
-            first = true;
+            spaces;
 
-        for (i = 0; i < code.length; i++) {
+        prevMaxLine = maxLine;
+        maxLine = singleFunctionTo ? singleFunctionTo : code.length;
+
+        for (i = singleFunctionFrom || 0; i <= maxLine; i++) {
             line = code[i];
 
             if (!line) {
@@ -830,25 +880,42 @@ var concatizerCompile;
 
             if (j >= stack[stack.length - 1].indent) {
                 if (j > stack[stack.length - 1].indent) {
-                    stack.push({indent: j});
+                    k = {indent: j};
+                    if (stack.push(k) === 2) {
+                        k.end = true;
+                    }
                 }
 
                 if (stack.length > 2) {
                     i = concatizerProcess(i, stack, ret);
                 } else {
-                    if (first) {
-                        first = false;
-                    } else {
+                    if (curTpl) {
                         addIndent(ret, 1);
-                        ret.push('},\n');
+                        ret.push('}');
+                        ret = ret.join('');
+
+                        try {
+                            eval('compiled[curTpl] = ' + ret);
+                        } catch (e) {
+                            console.log(ret);
+                            throw e;
+                        }
+
+                        ret = [];
                     }
 
                     line = strip(line).split(/\s+/);
-                    ret.push('"' + line[0] + '": ');
-                    line.shift();
-                    ret.push('function(' + line.join(', ') + ') {\n');
-                    addIndent(ret, stack.length);
-                    ret.push('return $C()\n');
+
+                    curTpl = line[0];
+
+                    if (!singleFunctionFrom) {
+                        line.shift();
+                        ret.push('function(_' + (line.length ? ', ' + line.join(', ') : '') + ') {\n');
+                        addIndent(ret, stack.length);
+                        ret.push('return $C(_.parent)\n');
+                    } else {
+                        ret.push('$C()\n');
+                    }
                 }
             }
         }
@@ -866,29 +933,31 @@ var concatizerCompile;
                 ret.push('.end(' + (ends > 1 ? ends : '') + ')\n');
             }
 
-            ret.push('}');
-        }
+            if (!singleFunctionFrom) {
+                ret.push('}');
+            }
 
-        ret.push('}');
-        ret.unshift('ret = ');
+            ret = ret.join('');
 
-        ret = ret.join('');
-
-        console.log(ret);
-
-        try {
-            eval(ret);
-        } catch (e) {
-            console.log(ret);
-            throw e;
+            if (singleFunctionFrom) {
+                maxLine = prevMaxLine;
+                return ret;
+            } else {
+                try {
+                    eval('compiled[curTpl] = ' + ret);
+                } catch (e) {
+                    console.log(ret);
+                    throw e;
+                }
+            }
         }
 
         if (!$C.tpl) {
             $C.tpl = {};
         }
 
-        for (i in ret) {
-            $C.tpl[i] = ret[i];
+        for (i in compiled) {
+            $C.tpl[i] = compiled[i];
         }
     }
 
