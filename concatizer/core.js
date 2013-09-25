@@ -8,15 +8,17 @@ var concatizerCompile;
         _tags = 'div|span|p|a|ul|ol|li|table|tr|td|th|br|img|b|i|s|u'.split('|'),
         TAG_FUNCS = {},
         i,
-        indentWith = '    ';
+        indentWith = '    ',
+        source,
+        code;
 
     for (i = 0; i < _tags.length; i++) {
         TAG_FUNCS[_tags[i]] = true;
     }
 
 
-    function strip(text) {
-        return text.replace(/^\s+|\s+$/g, '');
+    function strip(str) {
+        return str.replace(/^\s+|\s+$/g, '');
     }
 
     function addIndent(ret, size) {
@@ -33,7 +35,8 @@ var concatizerCompile;
 
 
     function concatizerError(line, col, message) {
-        throw message + ' (line: ' + line + ', col: ' + col + ')';
+        throw message + ' (line: ' + (line + 1) + ', col: ' + (col + 1) + '):\n' +
+              source[line] + '\n' + (new Array(col + 1).join(' ')) + '^';
     }
 
     function concatizerErrorUnexpectedSymbol(line, col, char) {
@@ -207,7 +210,7 @@ var concatizerCompile;
                     if (i === selectorLength) {
                         concatizerError(line, i, 'Unterminated selector');
                     } else {
-                        concatizerErrorUnexpectedSymbol(line, i + 1, selector[i]);
+                        concatizerErrorUnexpectedSymbol(line, i, selector[i]);
                     }
                 }
 
@@ -294,7 +297,7 @@ var concatizerCompile;
                     i = skipWhitespaces(selector, i);
 
                     if (selector[i] !== ')') {
-                        concatizerErrorUnexpectedSymbol(line, i + 1, selector[i]);
+                        concatizerErrorUnexpectedSymbol(line, i, selector[i]);
                     }
 
                     i++;
@@ -328,7 +331,7 @@ var concatizerCompile;
         processToken();
 
         if (!elem) {
-            concatizerError(line, 1, 'No tag name');
+            concatizerError(line, 0, 'No tag name');
         }
 
         if (className.length) {
@@ -339,7 +342,7 @@ var concatizerCompile;
     }
 
 
-    function concatizerClearComments(text) {
+    function concatizerClearComments() {
         var i,
             j,
             k,
@@ -348,8 +351,8 @@ var concatizerCompile;
             inString;
 
         i = 0;
-        while (i < text.length) {
-            tmp = text[i];
+        while (i < code.length) {
+            tmp = code[i];
 
             if (!inComment) {
                 inString = false;
@@ -389,34 +392,35 @@ var concatizerCompile;
                     j++;
                 }
 
-                text[i] = tmp;
+                code[i] = tmp;
             } else { // In comment.
                 k = tmp.indexOf('*/');
 
                 if (k >= 0) {
-                    text[i] = Array(k + 3).join(' ') + tmp.substring(k + 2);
+                    code[i] = Array(k + 3).join(' ') + tmp.substring(k + 2);
                     inComment = false;
                     i--;
                 } else {
-                    text[i] = '';
+                    code[i] = '';
                 }
             }
 
             i++;
         }
 
-        for (i = 0; i < text.length; i++) {
-            text[i] = text[i].replace(/\s+$/g, '');
+        for (i = 0; i < code.length; i++) {
+            code[i] = code[i].replace(/\s+$/g, '');
         }
     }
 
 
-    function concatizerExtractExpression(text, index, col) {
+    function concatizerExtractExpression(index, col) {
         var i = col,
-            line = text[index],
+            line = code[index],
             expr = [],
             inString,
-            brackets;
+            brackets,
+            startIndex = index;
 
         i = skipWhitespaces(line, i);
 
@@ -433,19 +437,19 @@ var concatizerCompile;
             }
 
             if (inString) {
-                concatizerError(index + 1, i + 1, 'Unterminated string');
+                concatizerError(index, i, 'Unterminated string');
             }
 
             i = skipWhitespaces(line, i);
 
             if (i < line.length) {
-                concatizerErrorUnexpectedSymbol(index + 1, i + 1, line[i]);
+                concatizerErrorUnexpectedSymbol(index, i, line[i]);
             }
 
             return {index: index, col: i, expr: expr.join('')};
         } else {
             if (line[i] !== '(') {
-                concatizerError(index + 1, i + 1, "Illegal symbol '" + line[i] + "'");
+                concatizerError(index, i, "Illegal symbol '" + line[i] + "'");
             }
 
             i++;
@@ -478,15 +482,15 @@ var concatizerCompile;
                 if (i === line.length) {
                     index++;
 
-                    while (index < text.length && !text[index]) {
+                    while (index < code.length && !code[index]) {
                         index++;
                     }
 
-                    if (index < text.length) {
-                        line = text[index];
+                    if (index < code.length) {
+                        line = code[index];
                         i = 0;
                     } else {
-                        concatizerError(index + 1, 1, 'Unterminated expression');
+                        concatizerError(startIndex, col, 'Unterminated expression');
                     }
                 }
             }
@@ -504,10 +508,10 @@ var concatizerCompile;
     }
 
 
-    function concatizerProcessAtAttribute(text, index, stack, ret) {
+    function concatizerProcessAtAttribute(index, stack, ret) {
         stack[stack.length - 1].end = false;
 
-        var line = text[index],
+        var line = code[index],
             i,
             name = [],
             val;
@@ -517,7 +521,7 @@ var concatizerCompile;
         i = skipWhitespaces(line, i);
 
         if (line[i] !== '@') {
-            concatizerErrorUnexpectedSymbol(index + 1, i + 1, line[i]);
+            concatizerErrorUnexpectedSymbol(index, i, line[i]);
         }
 
         i++;
@@ -530,21 +534,21 @@ var concatizerCompile;
         name = name.join('');
 
         if (!name.length || !name.match(attrName)) {
-            concatizerError(index + 1, i + 1, "Illegal attribute name '" + name + "'");
+            concatizerError(index, i, "Illegal attribute name '" + name + "'");
         }
 
         i = skipWhitespaces(line, i);
 
-        val = concatizerExtractExpression(text, index, i);
+        val = concatizerExtractExpression(index, i);
         index = val.index;
         val = val.expr;
 
-        if (index < text.length) {
-            line = text[index];
+        if (index < code.length) {
+            line = code[index];
             i = skipWhitespaces(line, val.col);
 
             if (i < line.length) {
-                concatizerErrorUnexpectedSymbol(index + 1, i + 1, line[i]);
+                concatizerErrorUnexpectedSymbol(index, i, line[i]);
             }
         }
 
@@ -554,18 +558,14 @@ var concatizerCompile;
         return index;
     }
 
-    function concatizerProcessText(text, index, stack, ret) {
-        addIndent(ret, stack.length);
-        ret.push('.text(' + strip(text[index]) + ')\n');
-    }
 
-    function concatizerProcessTextExpression(text, index, stack, ret) {
-        var expr = concatizerExtractExpression(text, index, 0);
+    function concatizerProcessTextExpression(index, stack, ret) {
+        var expr = concatizerExtractExpression(index, 0);
 
         index = expr.index;
 
-        if (expr.col < text[index].length) {
-            concatizerErrorUnexpectedSymbol(index + 1, expr.col + 1, text[index][expr.col]);
+        if (expr.col < code[index].length) {
+            concatizerErrorUnexpectedSymbol(index, expr.col, code[index][expr.col]);
         }
 
         addIndent(ret, stack.length);
@@ -578,9 +578,9 @@ var concatizerCompile;
         return index;
     }
 
-    function concatizerProcessCommand(text, index, stack, ret) {
+    function concatizerProcessCommand(index, stack, ret) {
         var i = 0,
-            line = text[index],
+            line = code[index],
             cmd,
             expr,
             expr2;
@@ -592,67 +592,112 @@ var concatizerCompile;
         cmd = line.substring(i, i + 4);
 
         switch (cmd) {
+            case 'CHOO':
+            case 'OTHE':
+                if (line.substring(i, i + 6) === 'CHOOSE' || line.substring(i, i + 9) === 'OTHERWISE') {
+                    if (strip(line) === 'CHOOSE' || strip(line) === 'OTHERWISE') {
+                        addIndent(ret, stack.length);
+                        ret.push(cmd === 'CHOO' ? '.choose()\n' : '.otherwise()\n');
+
+                        stack[stack.length - 1].end = true;
+                        if (cmd === 'CHOO') {
+                            stack[stack.length - 1].choose = true;
+                            break;
+                        } else if (stack[stack.length - 2].choose) {
+                            delete stack[stack.length - 2].choose;
+                            break;
+                        }
+                    } else {
+                        i += (cmd === 'CHOO' ? 6 : 9);
+                        concatizerErrorUnexpectedSymbol(index, i, line[i]);
+                    }
+                }
+
+                concatizerError(index, i, 'Unexpected command');
+                break;
+
             case 'TEST':
             case 'EACH':
             case 'ATTR':
-                expr = concatizerExtractExpression(text, index, i + 4);
+            case 'WHEN':
+                if (cmd === 'WHEN' && !stack[stack.length - 2].choose) {
+                    concatizerError(index, i, 'Unexpected command');
+                }
+
+                if (i + 4 >= line.length) {
+                    concatizerError(index, i + 4, 'Expression is expected');
+                }
+
+                expr = concatizerExtractExpression(index, i + 4);
 
                 index = expr.index;
                 i = expr.col;
 
-                if (index < text.length) {
-                    line = text[index];
+                if (index < code.length) {
+                    line = code[index];
                     i = skipWhitespaces(line, i);
                 }
 
                 break;
 
             case 'CALL':
+                addIndent(ret, stack.length);
+
+                ret.push('.act(function() { $C.tpl[13]; })\n');
+
                 break;
 
             case 'CURR':
-                if (line.substring(i, i + 7) === 'CURRENT') {
+            case 'PAYL':
+                cmd = line.substring(i, i + 7);
+                if (cmd === 'CURRENT' || cmd === 'PAYLOAD') {
                     i = skipWhitespaces(line, i + 7);
                     if (i < line.length) {
-                        concatizerErrorUnexpectedSymbol(index + 1, i + 1, line[i]);
+                        concatizerErrorUnexpectedSymbol(index, i, line[i]);
                     }
 
                     addIndent(ret, stack.length);
-                    ret.push('.text(function(item) { return item; })\n');
+
+                    if (cmd === 'CURRENT') {
+                        ret.push('.text(function(item) { return item; })\n');
+                    } else {
+                        ret.push('.act(function() { this.appendChild(PAYLOAD); })\n');
+                    }
 
                     break;
                 }
 
             default:
-                concatizerError(index + 1, i + 1, 'Unexpected command');
+                concatizerError(index, i, 'Unexpected command');
         }
 
         switch (cmd) {
             case 'TEST':
+            case 'WHEN':
             case 'EACH':
                 if (i < line.length) {
-                    concatizerErrorUnexpectedSymbol(index + 1, i + 1, line[i]);
+                    concatizerErrorUnexpectedSymbol(index, i, line[i]);
                 }
 
                 addIndent(ret, stack.length);
-                ret.push((cmd === 'TEST' ? '.test(' : '.each(') + expr.expr + ')\n');
+                ret.push((cmd === 'TEST' ? '.test(' : cmd === 'EACH' ? '.each(' : '.when(') + expr.expr + ')\n');
                 stack[stack.length - 1].end = true;
 
                 break;
 
             case 'ATTR':
-                expr2 = concatizerExtractExpression(text, index, i);
+                expr2 = concatizerExtractExpression(index, i);
 
                 index = expr2.index;
                 i = expr2.col;
 
-                if (index < text.length) {
-                    line = text[index];
+                if (index < code.length) {
+                    line = code[index];
                     i = skipWhitespaces(line, i);
                 }
 
                 if (i < line.length) {
-                    concatizerErrorUnexpectedSymbol(index + 1, i + 1, line[i]);
+                    concatizerErrorUnexpectedSymbol(index, i, line[i]);
                 }
 
                 addIndent(ret, stack.length);
@@ -664,8 +709,8 @@ var concatizerCompile;
         return index;
     }
 
-    function concatizerProcessElement(text, index, stack, ret) {
-        var elem = concatizerTokenizeSelector(index + 1, text[index]),
+    function concatizerProcessElement(index, stack, ret) {
+        var elem = concatizerTokenizeSelector(index, code[index]),
             hasAttr,
             needComma;
 
@@ -693,26 +738,26 @@ var concatizerCompile;
     }
 
 
-    function concatizerProcess(text, index, stack, ret) {
-        var line = strip(text[index]);
+    function concatizerProcess(index, stack, ret) {
+        var line = strip(code[index]);
 
         switch (line[0]) {
             case '"':
             case "'":
             case '(':
-                index = concatizerProcessTextExpression(text, index, stack, ret);
+                index = concatizerProcessTextExpression(index, stack, ret);
                 break;
 
             case '@':
-                index = concatizerProcessAtAttribute(text, index, stack, ret);
+                index = concatizerProcessAtAttribute(index, stack, ret);
                 break;
 
             default:
                 stack[stack.length - 1].end = true;
                 if (/[A-Z]/.test(line[0])) {
-                    index = concatizerProcessCommand(text, index, stack, ret);
+                    index = concatizerProcessCommand(index, stack, ret);
                 } else {
-                    concatizerProcessElement(text, index, stack, ret);
+                    concatizerProcessElement(index, stack, ret);
                 }
         }
 
@@ -720,10 +765,11 @@ var concatizerCompile;
     }
 
 
-    concatizerCompile = function (text) {
-        text = text.split(/\n\r|\r\n|\r|\n/);
+    concatizerCompile = function(src) {
+        source = src.split(/\n\r|\r\n|\r|\n/);
+        code = src.split(/\n\r|\r\n|\r|\n/);
 
-        concatizerClearComments(text);
+        concatizerClearComments();
 
         var ret = ['{'],
             i,
@@ -736,8 +782,8 @@ var concatizerCompile;
             spaces,
             first = true;
 
-        for (i = 0; i < text.length; i++) {
-            line = text[i];
+        for (i = 0; i < code.length; i++) {
+            line = code[i];
 
             if (!line) {
                 continue;
@@ -750,11 +796,11 @@ var concatizerCompile;
                 } else if (line[j] === ' ') {
                     spaces = true;
                 } else {
-                    concatizerError(i + 1, j + 1, 'Unexpected symbol (only tabs or spaces are allowed here)');
+                    concatizerError(i, j, 'Unexpected symbol (only tabs or spaces are allowed here)');
                 }
 
                 if (tabs && spaces) {
-                    concatizerError(i + 1, j + 1, 'Please, never ever mix tabs and spaces');
+                    concatizerError(i, j, 'Please, never ever mix tabs and spaces');
                 }
 
                 j++;
@@ -779,7 +825,7 @@ var concatizerCompile;
             }
 
             if (k !== j) {
-                concatizerError(i + 1, j + 1, 'Bad indentation');
+                concatizerError(i, j, 'Bad indentation');
             }
 
             if (j >= stack[stack.length - 1].indent) {
@@ -788,7 +834,7 @@ var concatizerCompile;
                 }
 
                 if (stack.length > 2) {
-                    i = concatizerProcess(text, i, stack, ret);
+                    i = concatizerProcess(i, stack, ret);
                 } else {
                     if (first) {
                         first = false;
