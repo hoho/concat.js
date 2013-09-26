@@ -711,7 +711,7 @@ var concatizerCompile;
                 k = (new Array(stack.length + 1)).join(indentWith);
 
                 ret.push('.act(function() {\n' + k + '$C.tpl.' + name + '({parent: this');
-                if (startIndex < index) {
+                if (startIndex < index - 1) {
                     ret.push(', payload:\n' + k + indentWith + strip(concatizerCompile(undefined, startIndex, index + 1)).split('\n').join('\n' + k));
                     ret.push('[0]');
                 }
@@ -945,12 +945,15 @@ var concatizerCompile;
             }
         }
 
-        if (ret.length > 1) {
+        if (stack.length > 1) {
             ends = 0;
 
-            while (stack.length > 2) {
-                stack.pop();
-                ends++;
+            while (stack.length > 1) {
+                k = stack.pop();
+
+                if (k.end) {
+                    ends++;
+                }
             }
 
             if (ends > 0) {
