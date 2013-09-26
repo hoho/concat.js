@@ -425,7 +425,25 @@ var concatizerCompile;
 
         i = skipWhitespaces(line, i);
 
-        if (line[i] === '"' || line[i] === "'") {
+        if (line.substring(i).match(/^(?:CURRENT|PAYLOAD)(?:\s|$)/)) {
+            if (line[i] === 'C') {
+                expr = 'arguments[0]';
+            } else {
+                expr = '_.payload';
+            }
+
+            if (!noWrap) {
+                expr = 'function() { return ' + expr + '; }';
+            }
+
+            i = skipWhitespaces(line, i + 7);
+
+            if (i < line.length && !hasMore) {
+                concatizerErrorUnexpectedSymbol(index, i, line[i]);
+            }
+
+            return {index: index, col: i, expr: expr};
+        } else if (line[i] === '"' || line[i] === "'") {
             inString = line[i];
             expr.push(line[i++]);
 
@@ -711,7 +729,7 @@ var concatizerCompile;
                 k = (new Array(stack.length + 1)).join(indentWith);
 
                 ret.push('.act(function() {\n' + k + '$C.tpl.' + name + '({parent: this');
-                if (startIndex < index - 1) {
+                if (startIndex < index) {
                     ret.push(', payload:\n' + k + indentWith + strip(concatizerCompile(undefined, startIndex, index + 1)).split('\n').join('\n' + k));
                     ret.push('[0]');
                 }
@@ -837,6 +855,16 @@ var concatizerCompile;
         if (!singleFunctionFrom) {
             source = src.split(/\n\r|\r\n|\r|\n/);
             code = src.split(/\n\r|\r\n|\r|\n/);
+
+            if (code.length) {
+                while (code[code.length - 1]) {
+                    if (!strip(code[code.length - 1])) {
+                        code.pop();
+                    } else {
+                        break;
+                    }
+                }
+            }
 
             concatizerClearComments();
         }
