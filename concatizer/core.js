@@ -456,6 +456,21 @@ var concatizerCompile;
             i++;
             brackets = 1;
 
+            if (i === line.length) {
+                index++;
+
+                while (index < maxLine && !strip(code[index])) {
+                    index++;
+                }
+
+                if (index < maxLine) {
+                    line = code[index];
+                    i = 0;
+                } else {
+                    concatizerError(startIndex, col, 'Unterminated expression');
+                }
+            }
+
             while (brackets > 0 && i < line.length) {
                 if (!inString) {
                     if (line[i] === '(') {
@@ -483,7 +498,7 @@ var concatizerCompile;
                 if (i === line.length) {
                     index++;
 
-                    while (index < maxLine && !code[index]) {
+                    while (index < maxLine && !strip(code[index])) {
                         index++;
                     }
 
@@ -509,6 +524,10 @@ var concatizerCompile;
                     expr = '(' + expr + ')';
                 } else {
                     expr = 'function() { return (' + expr + '); }';
+                }
+            } else {
+                if (noWrap) {
+                    expr = '(' + expr + ').apply(this, arguments)';
                 }
             }
 
