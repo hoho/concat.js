@@ -163,7 +163,7 @@ supposed to have compiled concat.js chains only.
         .$C('sep')
         .$C('page', null, {list: ['aa', 'bb'], isOL: true});
 
-## And the result inserted into <body> tag
+## And the result inserted into `<body>` tag
 
     <h1 id="identifier" aaa="bbb" class="some-class b-block1 b-block1_mod_val">This is page</h1>
     <p class="ccc">
