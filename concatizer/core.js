@@ -10,8 +10,7 @@ var concatizerCompile;
         i,
         indentWith = '    ',
         source,
-        code,
-        maxLine;
+        code;
 
     for (i = 0; i < _tags.length; i++) {
         TAG_FUNCS[_tags[i]] = true;
@@ -477,11 +476,11 @@ var concatizerCompile;
             if (i === line.length) {
                 index++;
 
-                while (index < maxLine && !strip(code[index])) {
+                while (index < code.length && !strip(code[index])) {
                     index++;
                 }
 
-                if (index < maxLine) {
+                if (index < code.length) {
                     line = code[index];
                     i = 0;
                 } else {
@@ -516,11 +515,11 @@ var concatizerCompile;
                 if (i === line.length) {
                     index++;
 
-                    while (index < maxLine && !strip(code[index])) {
+                    while (index < code.length && !strip(code[index])) {
                         index++;
                     }
 
-                    if (index < maxLine) {
+                    if (index < code.length) {
                         line = code[index];
                         i = 0;
                     } else {
@@ -706,31 +705,19 @@ var concatizerCompile;
                     args.push(expr.expr);
                 }
 
-
-                startIndex = index;
-
                 index++;
 
-                while (index < maxLine) {
-                    line = code[index];
-                    if (strip(line)) {
-                        k = skipWhitespaces(line, 0);
-                        if (k <= j) {
-                            break;
-                        }
-                    }
-                    index++;
-                }
+                var payload = concatizerCompile(undefined, stack[stack.length - 1].indent, index);
+                index = payload.index;
+                payload = payload.ret;
 
                 addIndent(ret, stack.length);
-
-                index--;
 
                 k = (new Array(stack.length + 1)).join(indentWith);
 
                 ret.push('.act(function() {\n' + k + '$C.tpl.' + name + '({parent: this');
-                if (startIndex < index) {
-                    ret.push(', payload:\n' + k + indentWith + strip(concatizerCompile(undefined, startIndex, index + 1)).split('\n').join('\n' + k));
+                if (true) {
+                    ret.push(', payload:\n' + k + indentWith + strip(payload).split('\n').join('\n' + k));
                     ret.push('[0]');
                 }
                 ret.push('}');
@@ -851,8 +838,8 @@ var concatizerCompile;
     }
 
 
-    concatizerCompile = function(src, singleFunctionFrom, singleFunctionTo) {
-        if (!singleFunctionFrom) {
+    concatizerCompile = function(src, minIndent, startIndex) {
+        if (!startIndex) {
             source = src.split(/\n\r|\r\n|\r|\n/);
             code = src.split(/\n\r|\r\n|\r|\n/);
 
@@ -871,21 +858,23 @@ var concatizerCompile;
 
         var compiled = {},
             curTpl,
+            template,
             ret = [],
             i,
             j,
             k,
             ends,
             line,
-            prevMaxLine,
             stack = [{indent: -1}],
             tabs,
             spaces;
 
-        prevMaxLine = maxLine;
-        maxLine = singleFunctionTo ? singleFunctionTo : code.length;
+        if (minIndent) {
+            stack.push({indent: minIndent, end: true});
+            ret.push('$C()\n');
+        }
 
-        for (i = singleFunctionFrom || 0; i < maxLine; i++) {
+        for (i = startIndex || 0; i < code.length; i++) {
             line = code[i];
 
             if (!line) {
@@ -927,7 +916,7 @@ var concatizerCompile;
                 ret.push('.end(' + (ends > 1 ? ends : '') + ')\n');
             }
 
-            if (k !== j) {
+            if ((k !== j) && (!minIndent || (minIndent && (j > minIndent)))) {
                 concatizerError(i, j, 'Bad indentation');
             }
 
@@ -948,7 +937,8 @@ var concatizerCompile;
                         ret = ret.join('');
 
                         try {
-                            eval('compiled[curTpl] = ' + ret);
+                            eval('template = ' + ret);
+                            compiled[curTpl] = ret;
                         } catch (e) {
                             console.log(ret);
                             throw e;
@@ -957,17 +947,18 @@ var concatizerCompile;
                         ret = [];
                     }
 
-                    line = strip(line).split(/\s+/);
+                    if (!minIndent) {
+                        line = strip(line).split(/\s+/);
 
-                    curTpl = line[0];
+                        curTpl = line[0];
 
-                    if (!singleFunctionFrom) {
                         line.shift();
                         ret.push('function(_' + (line.length ? ', ' + line.join(', ') : '') + ') {\n');
                         addIndent(ret, stack.length);
                         ret.push('return $C(_.parent)\n');
                     } else {
-                        ret.push('$C()\n');
+                        // It's a PAYLOAD for CALL command.
+                        break;
                     }
                 }
             }
@@ -975,6 +966,10 @@ var concatizerCompile;
 
         if (stack.length > 1) {
             ends = 0;
+
+            if (minIndent && i < code.length) {
+                stack.pop();
+            }
 
             while (stack.length > 1) {
                 k = stack.pop();
@@ -989,18 +984,18 @@ var concatizerCompile;
                 ret.push('.end(' + (ends > 1 ? ends : '') + ')\n');
             }
 
-            if (!singleFunctionFrom) {
+            if (!minIndent) {
                 ret.push('}');
             }
 
             ret = ret.join('');
 
-            if (singleFunctionFrom) {
-                maxLine = prevMaxLine;
-                return ret;
+            if (minIndent) {
+                return {index: i - 1, ret: ret};
             } else {
                 try {
-                    eval('compiled[curTpl] = ' + ret);
+                    eval('template = ' + ret);
+                    compiled[curTpl] = ret;
                 } catch (e) {
                     console.log(ret);
                     throw e;
@@ -1008,13 +1003,7 @@ var concatizerCompile;
             }
         }
 
-        if (!$C.tpl) {
-            $C.tpl = {};
-        }
-
-        for (i in compiled) {
-            $C.tpl[i] = compiled[i];
-        }
+        return compiled;
     }
 
 })();
