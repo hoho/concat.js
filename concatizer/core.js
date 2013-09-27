@@ -716,7 +716,7 @@ var concatizerCompile;
                 k = (new Array(stack.length + 1)).join(indentWith);
 
                 ret.push('.act(function() {\n' + k + '$C.tpl.' + name + '({parent: this');
-                if (true) {
+                if (payload) {
                     ret.push(', payload:\n' + k + indentWith + strip(payload).split('\n').join('\n' + k));
                     ret.push('[0]');
                 }
@@ -842,17 +842,6 @@ var concatizerCompile;
         if (!startIndex) {
             source = src.split(/\n\r|\r\n|\r|\n/);
             code = src.split(/\n\r|\r\n|\r|\n/);
-
-            if (code.length) {
-                while (code[code.length - 1]) {
-                    if (!strip(code[code.length - 1])) {
-                        code.pop();
-                    } else {
-                        break;
-                    }
-                }
-            }
-
             concatizerClearComments();
         }
 
@@ -986,6 +975,9 @@ var concatizerCompile;
 
             if (!minIndent) {
                 ret.push('}');
+            } else if (ret.length <= 3) {
+                // Empty payload, just skip it.
+                ret = [];
             }
 
             ret = ret.join('');
