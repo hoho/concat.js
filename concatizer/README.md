@@ -136,9 +136,7 @@ http://rawgithub.com/hoho/concat.js/master/concatizer/example.html
                 .end()
                 .ul()
                     .act(function() {
-                        $C.tpl.list({parent: this, payload:
-                            $C()
-                            .end()[0]},
+                        $C.tpl.list({parent: this},
                             (items)
                         );
                     })
@@ -153,9 +151,7 @@ http://rawgithub.com/hoho/concat.js/master/concatizer/example.html
                 .end()
                 .ol()
                     .act(function() {
-                        $C.tpl.list({parent: this, payload:
-                            $C()
-                            .end()[0]},
+                        $C.tpl.list({parent: this},
                             (items)
                         );
                     })
