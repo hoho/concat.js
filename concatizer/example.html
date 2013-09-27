@@ -5,7 +5,7 @@
 </head>
 <body>
 
-<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+<!--<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>-->
 <script src="core.js"></script>
 
 <script type="concat.js/template">
@@ -59,7 +59,30 @@
 
 <script>
 
-    // jQuery plugin to call template.
+    // Extending concat.js with .callTemplate() method that calls compiled
+    // templates.
+    $C.define('callTemplate', function(item, index, arr, args) {
+        var name = args[0];
+        args = Array.prototype.slice.call(args, 0);
+        args[0] = {parent: this};
+        $C.tpl[name].apply(this, args);
+    });
+
+    // Now we can simply call templates
+    $C(document.body)
+        .div({style: {'font-size': '150%'}})
+            .callTemplate('page', 'This is page', {})
+            .p()
+                .text('So, we can call compiled templates')
+                .elem('hr')
+            .end(2)
+            .callTemplate('page', null, {list: [11, 22, 33], isUL: true})
+            .callTemplate('sep')
+            .callTemplate('page', null, {list: ['aa', 'bb'], isOL: true})
+    .end(2);
+
+    /*
+    // If we use jQuery, we can create a plugin like this.
     $.fn.$C = function(name) {
         var args = Array.prototype.slice.call(arguments, 0);
 
@@ -68,14 +91,14 @@
             $C.tpl[name].apply(this, args);
         });
     };
-
-    // Calling template with different input.
+    // And use it.
     $('body')
         .$C('page', 'This is page', {})
         .$C('sep')
         .$C('page', null, {list: [11, 22, 33], isUL: true})
         .$C('sep')
         .$C('page', null, {list: ['aa', 'bb'], isOL: true});
+    */
 </script>
 
 </body>
