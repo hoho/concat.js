@@ -35,8 +35,8 @@ var concatizerCompile;
 
 
     function concatizerError(line, col, message) {
-        throw message + ' (line: ' + (line + 1) + ', col: ' + (col + 1) + '):\n' +
-              source[line] + '\n' + (new Array(col + 1).join(' ')) + '^';
+        throw new Error(message + ' (line: ' + (line + 1) + ', col: ' + (col + 1) + '):\n' +
+                        source[line] + '\n' + (new Array(col + 1).join(' ')) + '^');
     }
 
     function concatizerErrorUnexpectedSymbol(line, col, chr) {
