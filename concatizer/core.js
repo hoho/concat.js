@@ -10,7 +10,8 @@ var concatizerCompile;
         i,
         indentWith = '    ',
         source,
-        code;
+        code,
+        variables;
 
     for (i = 0; i < _tags.length; i++) {
         TAG_FUNCS[_tags[i]] = true;
@@ -41,6 +42,12 @@ var concatizerCompile;
 
     function concatizerErrorUnexpectedSymbol(line, col, chr) {
         concatizerError(line, col, "Unexpected symbol '" + chr + "'");
+    }
+
+    function concatizerCheckName(line, col, name) {
+        if (name === '_' || !name.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/)) {
+            concatizerError(line, col, "Illegal name '" + name + "'");
+        }
     }
 
 
@@ -619,7 +626,12 @@ var concatizerCompile;
             line = code[index],
             cmd,
             expr,
-            expr2;
+            expr2,
+            args,
+            name,
+            j,
+            k,
+            payload;
 
         stack[stack.length - 1].end = false;
 
@@ -673,13 +685,34 @@ var concatizerCompile;
 
                 break;
 
-            case 'CALL':
-                var args = [],
-                    name = [],
-                    j,
-                    k,
-                    startIndex;
+            case 'INSE':
+                cmd = line.substring(i, i + 6);
 
+                if (cmd === 'INSERT' && whitespace.test(line[i + 6])) {
+                    expr = concatizerExtractExpression(index, i + 7, false, true);
+                    addIndent(ret, stack.length);
+
+                    index = expr.index;
+                    i = expr.col;
+
+                    ret.push('.act(function(_) {\n');
+                    addIndent(ret, stack.length + 1);
+                    ret.push('_ = ' + expr.expr + ';\n');
+                    addIndent(ret, stack.length + 1);
+                    ret.push('if (!(_ instanceof Node)) { _ = document.createTextNode(_); }\n');
+                    addIndent(ret, stack.length + 1);
+                    ret.push('this.appendChild(_);\n');
+                    addIndent(ret, stack.length);
+                    ret.push('})\n');
+                } else {
+                    concatizerError(index, i, 'Unexpected command');
+                }
+
+                break;
+
+            case 'CALL':
+                args = [];
+                name = [];
                 j = i;
 
                 i = skipWhitespaces(line, i + 4);
@@ -707,7 +740,7 @@ var concatizerCompile;
 
                 index++;
 
-                var payload = concatizerCompile(undefined, stack[stack.length - 1].indent, index);
+                payload = concatizerCompile(undefined, stack[stack.length - 1].indent, index);
                 index = payload.index;
                 payload = payload.ret;
 
@@ -727,6 +760,72 @@ var concatizerCompile;
                 }
 
                 ret.push(');\n');
+
+                addIndent(ret, stack.length);
+                ret.push('})\n');
+
+                break;
+
+            case 'SET':
+            case 'SET ':
+                name = [];
+
+                i = skipWhitespaces(line, i + 3);
+
+                j = i;
+
+                while (i < line.length && !whitespace.test(line[i])) {
+                    name.push(line[i]);
+                    i++;
+                }
+
+                if (!name.length) {
+                    concatizerError(index, j, 'No name');
+                }
+
+                name = name.join('');
+                concatizerCheckName(index, j, name);
+
+                variables[name] = true;
+
+                i = skipWhitespaces(line, i);
+
+                if (i < line.length) {
+                    expr = concatizerExtractExpression(index, i, false, true);
+                    index = expr.index;
+                    i = expr.col;
+                    line = code[index];
+                    expr = expr.expr;
+                }
+
+                j = index + 1;
+
+                payload = concatizerCompile(undefined, stack[stack.length - 1].indent, index + 1);
+                index = payload.index;
+                payload = payload.ret;
+
+                if (payload && expr) {
+                    i = skipWhitespaces(code[j], 0);
+                    concatizerError(j, i, 'Duplicate variable content');
+                }
+
+                if (!payload && !expr) {
+                    j--;
+                    concatizerError(j, i, 'No value');
+                } else if (payload) {
+                    expr = payload;
+                }
+
+                addIndent(ret, stack.length);
+
+                k = (new Array(stack.length)).join(indentWith);
+
+                ret.push('.act(function() {\n' + k + indentWith + name + ' = ');
+                ret.push(strip(expr).split('\n').join('\n' + k));
+                if (payload) {
+                    ret.push('[0]');
+                }
+                ret.push(';\n');
 
                 addIndent(ret, stack.length);
                 ret.push('})\n');
@@ -838,6 +937,20 @@ var concatizerCompile;
     }
 
 
+    function concatizerInsertVariables(ret) {
+        var args = [],
+            v;
+
+        for (v in variables) {
+            args.push(v);
+        }
+
+        if (args.length) {
+            ret.splice(1, 0, indentWith + 'var ' + args.join(', ') + ';\n');
+        }
+    }
+
+
     concatizerCompile = function(src, minIndent, startIndex) {
         if (!startIndex) {
             source = src.split(/\n\r|\r\n|\r|\n/);
@@ -856,7 +969,9 @@ var concatizerCompile;
             line,
             stack = [{indent: -1}],
             tabs,
-            spaces;
+            spaces,
+            args,
+            name;
 
         if (minIndent) {
             stack.push({indent: minIndent, end: true});
@@ -923,6 +1038,9 @@ var concatizerCompile;
                     if (curTpl) {
                         addIndent(ret, 1);
                         ret.push('}');
+
+                        concatizerInsertVariables(ret);
+
                         ret = ret.join('');
 
                         try {
@@ -937,16 +1055,37 @@ var concatizerCompile;
                     }
 
                     if (!minIndent) {
-                        line = strip(line).split(/\s+/);
+                        args = [];
+                        name = [];
 
-                        curTpl = line[0];
+                        k = skipWhitespaces(line, 0);
+                        line += ' ';
 
-                        line.shift();
-                        ret.push('function(_' + (line.length ? ', ' + line.join(', ') : '') + ') {\n');
+                        while (k < line.length) {
+                            if (whitespace.test(line[k])) {
+                                if (name.length) {
+                                    name = name.join('');
+                                    concatizerCheckName(i, k - name.length, name);
+                                    args.push(name);
+                                    name = [];
+                                }
+                            } else {
+                                name.push(line[k]);
+                            }
+
+                            k++;
+                        }
+
+                        curTpl = args[0];
+
+                        variables = {};
+
+                        args.shift();
+                        ret.push('function(_' + (args.length ? ', ' + args.join(', ') : '') + ') {\n');
                         addIndent(ret, stack.length);
                         ret.push('return $C(_.parent)\n');
                     } else {
-                        // It's a PAYLOAD for CALL command.
+                        // It's a PAYLOAD for CALL command or SET command.
                         break;
                     }
                 }
@@ -980,11 +1119,13 @@ var concatizerCompile;
                 ret = [];
             }
 
-            ret = ret.join('');
-
             if (minIndent) {
-                return {index: i - 1, ret: ret};
+                return {index: i - 1, ret: ret.join('')};
             } else {
+                concatizerInsertVariables(ret);
+
+                ret = ret.join('');
+
                 try {
                     eval('template = ' + ret);
                     compiled[curTpl] = ret;

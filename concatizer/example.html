@@ -14,6 +14,11 @@
         TEST (title)
             h1#identifier.some-class[aaa=bbb]%b-block1{mod=val}
                 (title)
+        SET some_var (Math.random())
+        SET some_var2
+            b
+                i
+                    (Math.random())
         p.ccc
             CHOOSE
                 WHEN (data.isUL)
@@ -24,7 +29,13 @@
                     CALL ol_list (data.list) (1 + 3)
                 OTHERWISE
                     em
-                        "Nothing"
+                        (some_var)
+                        br
+                        (some_var2)
+                        br
+                        INSERT (some_var2)
+                        br
+                        (some_var)
 
     ul_list items
         div[data-list=999]
