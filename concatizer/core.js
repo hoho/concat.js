@@ -631,7 +631,8 @@ var concatizerCompile;
             name,
             j,
             k,
-            payload;
+            payload,
+            payload2;
 
         stack[stack.length - 1].end = false;
 
@@ -711,9 +712,14 @@ var concatizerCompile;
                 break;
 
             case 'CALL':
+            case 'WITH':
                 args = [];
                 name = [];
                 j = i;
+
+                if (!whitespace.test(line[i + 4])) {
+                    concatizerError(index, i, 'Unexpected command');
+                }
 
                 i = skipWhitespaces(line, i + 4);
 
@@ -731,11 +737,15 @@ var concatizerCompile;
                 i = skipWhitespaces(line, i);
 
                 while (i < line.length) {
-                    expr = concatizerExtractExpression(index, i, true, true);
+                    expr = concatizerExtractExpression(index, i, cmd === 'CALL', true);
                     index = expr.index;
                     i = expr.col;
                     line = code[index];
                     args.push(expr.expr);
+                }
+
+                if (cmd === 'WITH' && !args.length) {
+                    concatizerError(index, i, 'Expression is expected');
                 }
 
                 index++;
@@ -744,25 +754,90 @@ var concatizerCompile;
                 index = payload.index;
                 payload = payload.ret;
 
+                if (cmd === 'WITH' && index + 1 < code.length) {
+                    line = code[index + 1];
+                    i = skipWhitespaces(line, 0);
+
+                    if (i === stack[stack.length - 1].indent &&
+                        line.substring(i, i + 4) === 'ELSE' &&
+                        (i + 4 === line.length || whitespace.test(line[i + 4])))
+                    {
+                        i = skipWhitespaces(line, i + 4);
+
+                        if (i < line.length) {
+                            concatizerErrorUnexpectedSymbol(index + 1, i);
+                        }
+
+                        index += 2;
+
+                        payload2 = concatizerCompile(undefined, stack[stack.length - 1].indent, index);
+                        index = payload2.index;
+                        payload2 = payload2.ret;
+                    }
+                }
+
                 addIndent(ret, stack.length);
 
                 k = (new Array(stack.length + 1)).join(indentWith);
 
-                ret.push('.act(function() {\n' + k + '$C.tpl.' + name + '({parent: this');
-                if (payload) {
-                    ret.push(', payload:\n' + k + indentWith + strip(payload).split('\n').join('\n' + k));
-                    ret.push('[0]');
+                if (cmd === 'WITH') {
+                    variables[name] = true;
+
+                    expr = args[0];
+
+                    if (payload) {
+                        payload = payload.replace('$C()', '$C(this)');
+                        payload = strip(payload).split('\n').join('\n' + k);
+                    }
+
+                    if (payload2) {
+                        payload2 = payload2.replace('$C()', '$C(this)');
+                        payload2 = strip(payload2).split('\n').join('\n' + k);
+                    }
+
+                    ret.push('.act(function() {\n');
+
+                    addIndent(ret, stack.length + 1);
+                    ret.push('try { ' + name + ' = ' + expr + ' } catch(e) {}\n');
+                    addIndent(ret, stack.length + 1);
+                    ret.push('if (' + name + ' === undefined || ' + name + ' === null) {\n');
+                    addIndent(ret, stack.length + (payload2 ? 2 : 1));
+
+                    if (payload2) {
+                        ret.push(payload2);
+                        ret.push('\n');
+                        addIndent(ret, stack.length + 1);
+                    }
+
+                    if (payload) {
+                        ret.push('} else {\n');
+                        addIndent(ret, stack.length + 2);
+                        ret.push(payload);
+                        ret.push('\n');
+                        addIndent(ret, stack.length + 1);
+                    }
+
+                    ret.push('}\n');
+
+                    addIndent(ret, stack.length);
+                    ret.push('})\n');
+                } else {
+                    ret.push('.act(function() {\n' + k + '$C.tpl.' + name + '({parent: this');
+                    if (payload) {
+                        ret.push(', payload:\n' + k + indentWith + strip(payload).split('\n').join('\n' + k));
+                        ret.push('[0]');
+                    }
+                    ret.push('}');
+
+                    if (args.length) {
+                        ret.push(',\n' + k + indentWith + (args.join(',\n' + k + indentWith)) + '\n' + k);
+                    }
+
+                    ret.push(');\n');
+
+                    addIndent(ret, stack.length);
+                    ret.push('})\n');
                 }
-                ret.push('}');
-
-                if (args.length) {
-                    ret.push(',\n' + k + indentWith + (args.join(',\n' + k + indentWith)) + '\n' + k);
-                }
-
-                ret.push(');\n');
-
-                addIndent(ret, stack.length);
-                ret.push('})\n');
 
                 break;
 
