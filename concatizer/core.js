@@ -1246,3 +1246,8 @@ var concatizerCompile;
     }
 
 })();
+
+// Exporting concatizerCompile for command line interface.
+if (typeof module !== 'undefined') {
+    module.exports = concatizerCompile;
+}
