@@ -11,7 +11,8 @@ var concatizerCompile;
         indentWith = '    ',
         source,
         code,
-        variables;
+        variables,
+        currentTemplateName;
 
     for (i = 0; i < _tags.length; i++) {
         TAG_FUNCS[_tags[i]] = true;
@@ -32,6 +33,10 @@ var concatizerCompile;
         }
 
         return col;
+    }
+
+    function concatizerGetAnonymousFunctionName(line, col) {
+        return '_' + currentTemplateName + '_' + (line + 1) + '_' + (col + 1);
     }
 
 
@@ -421,15 +426,30 @@ var concatizerCompile;
     }
 
 
+    function concatizerCheckExpression(expr) {
+        var tmp;
+
+        try {
+            eval('tmp = function() { tmp = ' + expr + '}');
+        } catch(e) {
+            console.log(expr);
+            throw e;
+        }
+    }
+
+
     function concatizerExtractExpression(index, col, hasMore, noWrap) {
         var i = col,
             line = code[index],
             expr = [],
             inString,
             brackets,
-            startIndex = index;
+            startIndex = index,
+            funcName;
 
         i = skipWhitespaces(line, i);
+
+        funcName =  concatizerGetAnonymousFunctionName(index, i);
 
         if (line.substring(i).match(/^(?:CURRENT|PAYLOAD)(?:\s|$)/)) {
             if (line[i] === 'C') {
@@ -439,7 +459,7 @@ var concatizerCompile;
             }
 
             if (!noWrap) {
-                expr = 'function() { return ' + expr + '; }';
+                expr = 'function ' + funcName + '() { return ' + expr + '; }';
             }
 
             i = skipWhitespaces(line, i + 7);
@@ -447,6 +467,8 @@ var concatizerCompile;
             if (i < line.length && !hasMore) {
                 concatizerErrorUnexpectedSymbol(index, i, line[i]);
             }
+
+            concatizerCheckExpression(expr);
 
             return {index: index, col: i, expr: expr};
         } else if (line[i] === '"' || line[i] === "'") {
@@ -471,7 +493,11 @@ var concatizerCompile;
                 concatizerErrorUnexpectedSymbol(index, i, line[i]);
             }
 
-            return {index: index, col: i, expr: expr.join('')};
+            expr = expr.join('');
+
+            concatizerCheckExpression(expr);
+
+            return {index: index, col: i, expr: expr};
         } else {
             if (line[i] !== '(') {
                 concatizerError(index, i, "Illegal symbol '" + line[i] + "'");
@@ -547,7 +573,7 @@ var concatizerCompile;
                 if (noWrap) {
                     expr = '(' + expr + ')';
                 } else {
-                    expr = 'function() { return (' + expr + '); }';
+                    expr = 'function ' + funcName + '() { return (' + expr + '); }';
                 }
             } else {
                 if (noWrap) {
@@ -558,6 +584,8 @@ var concatizerCompile;
             if (i < line.length && !hasMore) {
                 concatizerErrorUnexpectedSymbol(index, i, line[i]);
             }
+
+            concatizerCheckExpression(expr);
 
             return {index: index, col: i, expr: expr};
         }
@@ -632,11 +660,14 @@ var concatizerCompile;
             j,
             k,
             payload,
-            payload2;
+            payload2,
+            funcName;
 
         stack[stack.length - 1].end = false;
 
         i = skipWhitespaces(line, i);
+
+        funcName = concatizerGetAnonymousFunctionName(index, i);
 
         cmd = line.substring(i, i + 4);
 
@@ -696,7 +727,7 @@ var concatizerCompile;
                     index = expr.index;
                     i = expr.col;
 
-                    ret.push('.act(function(_) {\n');
+                    ret.push('.act(function ' + funcName + '(_) {\n');
                     addIndent(ret, stack.length + 1);
                     ret.push('_ = ' + expr.expr + ';\n');
                     addIndent(ret, stack.length + 1);
@@ -795,7 +826,7 @@ var concatizerCompile;
                         payload2 = strip(payload2).split('\n').join('\n' + k);
                     }
 
-                    ret.push('.act(function() {\n');
+                    ret.push('.act(function ' + funcName + '() {\n');
 
                     addIndent(ret, stack.length + 1);
                     ret.push('try { ' + name + ' = ' + expr + ' } catch(e) { ' + name + ' = undefined; }\n');
@@ -822,7 +853,7 @@ var concatizerCompile;
                     addIndent(ret, stack.length);
                     ret.push('})\n');
                 } else {
-                    ret.push('.act(function() {\n' + k + '$C.tpl.' + name + '({parent: this');
+                    ret.push('.act(function ' + funcName + '() {\n' + k + '$C.tpl.' + name + '({parent: this');
                     if (payload) {
                         ret.push(', payload:\n' + k + indentWith + strip(payload).split('\n').join('\n' + k));
                         ret.push('[0]');
@@ -895,7 +926,7 @@ var concatizerCompile;
 
                 k = (new Array(stack.length)).join(indentWith);
 
-                ret.push('.act(function() {\n' + k + indentWith + name + ' = ');
+                ret.push('.act(function ' + funcName + '() {\n' + k + indentWith + name + ' = ');
                 ret.push(strip(expr).split('\n').join('\n' + k));
                 if (payload) {
                     ret.push('[0]');
@@ -921,7 +952,7 @@ var concatizerCompile;
                     if (cmd === 'CURRENT') {
                         ret.push('.text(function(item) { return item; })\n');
                     } else {
-                        ret.push('.act(function() { if (_.payload) { this.appendChild(_.payload); }})\n');
+                        ret.push('.act(function ' + funcName + '() { if (_.payload) { this.appendChild(_.payload); }})\n');
                     }
 
                     break;
@@ -1151,7 +1182,7 @@ var concatizerCompile;
                             k++;
                         }
 
-                        curTpl = args[0];
+                        curTpl = currentTemplateName = args[0];
 
                         variables = {};
 
