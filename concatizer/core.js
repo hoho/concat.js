@@ -798,7 +798,7 @@ var concatizerCompile;
                     ret.push('.act(function() {\n');
 
                     addIndent(ret, stack.length + 1);
-                    ret.push('try { ' + name + ' = ' + expr + ' } catch(e) {}\n');
+                    ret.push('try { ' + name + ' = ' + expr + ' } catch(e) { ' + name + ' = undefined; }\n');
                     addIndent(ret, stack.length + 1);
                     ret.push('if (' + name + ' === undefined || ' + name + ' === null) {\n');
                     addIndent(ret, stack.length + (payload2 ? 2 : 1));
