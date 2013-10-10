@@ -1,6 +1,6 @@
 {
   "name": "concat.js",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "Chainable DOM Builder",
   "main": "concat.js",
   "directories": {
@@ -25,7 +25,7 @@
     "url": "https://github.com/hoho/concat.js/issues"
   },
   "bin": {
-      "grunt": "concatizer/bin/concatize"
+      "concatize": "concatizer/bin/concatize"
   },
   "dependencies": {},
   "devDependencies": {

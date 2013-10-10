@@ -1,5 +1,5 @@
 /*!
- * concat.js v0.5.3, https://github.com/hoho/concat.js
+ * concat.js v0.5.4, https://github.com/hoho/concat.js
  * Copyright 2013 Marat Abdullin
  * Released under the MIT license
  */
