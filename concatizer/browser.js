@@ -1,10 +1,14 @@
 function concatizerCompileScriptTags() {
+    'use strict';
+
     var i,
         tpls = document.getElementsByTagName('script'),
         tpl,
         compiled,
         name;
 
+    /*global $C*/
+    /*global concatizerCompile*/
     if (!$C.tpl) {
         $C.tpl = {};
     }

@@ -1,5 +1,5 @@
 /*!
- * concat.js v0.5.2, https://github.com/hoho/concat.js
+ * concat.js v0.5.3, https://github.com/hoho/concat.js
  * Copyright 2013 Marat Abdullin
  * Released under the MIT license
  */
@@ -29,7 +29,7 @@
                     self.c = item;
 
                     return self;
-                }
+                };
             },
 
         constr =
@@ -161,7 +161,7 @@
                 item = Item(self, function(elem/**/, a, prop, val, tmp) {
                     elem = item.P = document.createElement(name);
 
-                    for (i in attr) {
+                    for (var i in attr) {
                         if (isFunction((a = attr[i]))) {
                             a = a[applyString](elem, curArgs);
                         }
@@ -238,7 +238,7 @@
                 };
             };
 
-        item['T'] = true;
+        item.T = true;
         self.c = item;
 
         choose.when = condFunc();
@@ -269,7 +269,7 @@
                 });
 
             return this;
-        }
+        };
     };
 
     // We're inside and we have an access to curArgs variable which is

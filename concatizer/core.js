@@ -389,7 +389,7 @@ var concatizerCompile;
                                 k = tmp.indexOf('*/');
 
                                 if (k > j) {
-                                    tmp = tmp.substring(0, j) + Array(k + 3 - j).join(' ') + tmp.substring(k + 2);
+                                    tmp = tmp.substring(0, j) + new Array(k + 3 - j).join(' ') + tmp.substring(k + 2);
                                     continue;
                                 } else {
                                     inComment = true;
@@ -409,7 +409,7 @@ var concatizerCompile;
                 k = tmp.indexOf('*/');
 
                 if (k >= 0) {
-                    code[i] = Array(k + 3).join(' ') + tmp.substring(k + 2);
+                    code[i] = new Array(k + 3).join(' ') + tmp.substring(k + 2);
                     inComment = false;
                     i--;
                 } else {
@@ -427,10 +427,8 @@ var concatizerCompile;
 
 
     function concatizerCheckExpression(expr) {
-        var tmp;
-
         try {
-            eval('tmp = function() { tmp = ' + expr + '}');
+            return new Function(expr);
         } catch(e) {
             console.log(expr);
             throw e;
@@ -955,8 +953,11 @@ var concatizerCompile;
                         ret.push('.act(function ' + funcName + '() { if (_.payload) { this.appendChild(_.payload); }})\n');
                     }
 
-                    break;
+                } else {
+                    concatizerError(index, i, 'Unexpected command');
                 }
+
+                break;
 
             default:
                 concatizerError(index, i, 'Unexpected command');
@@ -1003,7 +1004,7 @@ var concatizerCompile;
             needComma = '';
         } else {
             ret.push(".elem('" + elem.elem + "'");
-            needComma = ', '
+            needComma = ', ';
         }
 
         if (hasAttr) {
@@ -1150,8 +1151,9 @@ var concatizerCompile;
                         ret = ret.join('');
 
                         try {
-                            eval('template = ' + ret);
-                            compiled[curTpl] = ret;
+                            if (eval('template = ' + ret) && template) {
+                                compiled[curTpl] = ret;
+                            }
                         } catch (e) {
                             console.log(ret);
                             throw e;
@@ -1233,8 +1235,9 @@ var concatizerCompile;
                 ret = ret.join('');
 
                 try {
-                    eval('template = ' + ret);
-                    compiled[curTpl] = ret;
+                    if (eval('template = ' + ret) && template) {
+                        compiled[curTpl] = ret;
+                    }
                 } catch (e) {
                     console.log(ret);
                     throw e;
@@ -1243,7 +1246,7 @@ var concatizerCompile;
         }
 
         return compiled;
-    }
+    };
 
 })();
 

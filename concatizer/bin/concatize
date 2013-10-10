@@ -1,5 +1,9 @@
+#!/usr/bin/env node
+
+'use strict';
+
 try {
-    var concatizerCompile = require('./core.js'),
+    var concatizerCompile = require('../core.js'),
         fs = require('fs'),
         filenames = process.argv.slice(2);
 
@@ -7,7 +11,7 @@ try {
         var compiled = {},
             tmp,
             code,
-            name,
+            tplName,
             hasTemplates;
 
         for (var i = 0; i < filenames.length; i++) {
@@ -15,8 +19,8 @@ try {
 
             tmp = concatizerCompile(code);
 
-            for (name in tmp) {
-                compiled[name] = tmp[name];
+            for (tplName in tmp) {
+                compiled[tplName] = tmp[tplName];
                 hasTemplates = true;
             }
         }
@@ -27,8 +31,8 @@ try {
 
         console.log('if (!$C.tpl) { $C.tpl = {}; }\n');
 
-        for (name in compiled) {
-            console.log('$C.tpl.' + name + ' = ' + compiled[name] + '\n');
+        for (tplName in compiled) {
+            console.log('$C.tpl.' + tplName + ' = ' + compiled[tplName] + '\n');
         }
 
     } else {
