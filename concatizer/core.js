@@ -36,7 +36,7 @@ var concatizerCompile;
     }
 
     function concatizerGetAnonymousFunctionName(line, col) {
-        return '_' + currentTemplateName + '_' + (line + 1) + '_' + (col + 1);
+        return '$C_' + currentTemplateName + '_' + (line + 1) + '_' + (col + 1);
     }
 
 
