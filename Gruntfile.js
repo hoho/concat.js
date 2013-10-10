@@ -17,7 +17,7 @@ module.exports = function(grunt) {
                 }
             },
             grunt: {
-                src: ['Gruntfile.js'],
+                src: ['Gruntfile.js', 'tasks/compile.js'],
                 options: {
                     jshintrc: '.jshintrc'
                 }

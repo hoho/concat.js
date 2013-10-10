@@ -1,11 +1,13 @@
 'use strict';
 
 module.exports = function(grunt) {
-    var concatizerCompile = require('../concatizer/core.js')
+    var concatizerCompile = require('../concatizer/core.js');
 
     grunt.registerMultiTask('concatizeTemplates', 'Compile concat.js templates.', function() {
         this.files.forEach(function(f) {
-            var ret = {};
+            var ret = {},
+                tplName,
+                code;
 
             f.src
                 .filter(function(filepath) {
@@ -30,9 +32,9 @@ module.exports = function(grunt) {
                 });
 
             if (Object.keys(ret).length) {
-                var code = ['if (!$C.tpl) { $C.tpl = {}; }\n'];
+                code = ['if (!$C.tpl) { $C.tpl = {}; }\n'];
 
-                for (var tplName in ret) {
+                for (tplName in ret) {
                     code.push('$C.tpl.' + tplName + ' = ' + ret[tplName] + '\n');
                 }
 
