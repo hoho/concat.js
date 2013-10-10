@@ -430,7 +430,7 @@ var concatizerCompile;
         try {
             return new Function(expr);
         } catch(e) {
-            console.log(expr);
+            e.message = expr + '\n\n' + e.message + '\n';
             throw e;
         }
     }
@@ -1155,7 +1155,7 @@ var concatizerCompile;
                                 compiled[curTpl] = ret;
                             }
                         } catch (e) {
-                            console.log(ret);
+                            e.message = ret + '\n\n' + e.message + '\n';
                             throw e;
                         }
 
@@ -1239,7 +1239,7 @@ var concatizerCompile;
                         compiled[curTpl] = ret;
                     }
                 } catch (e) {
-                    console.log(ret);
+                    e.message = ret + '\n\n' + e.message + '\n';
                     throw e;
                 }
             }

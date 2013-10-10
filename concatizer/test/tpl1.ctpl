@@ -1,0 +1,47 @@
+page title data
+    TEST (title)
+        h1#identifier.some-class[aaa=bbb]%b-block1{mod=val}
+            (title)
+
+    SET some_var (Math.random())
+    SET some_var2
+        b
+            i
+                (Math.random())
+
+    SET some_var3 ({aaa: {bbb: {ccc: {ddd: 'in so deep'}}}})
+
+    WITH some_var4 (some_var3.aaa.bbb.ccc.ddd)
+        "This is cool: "
+        (some_var4)
+        br
+    ELSE
+        "This is not cool"
+
+    WITH some_var5 (some_var3.a.b.c.d)
+        "Never gonna happen"
+    ELSE
+        em
+            WITH aaaa (true)
+                "Yayayyaya"
+                br
+        strong
+            "Muoahahahaha"
+
+    p.ccc
+        CHOOSE
+            WHEN (data.isUL)
+                CALL ul_list (data.list)
+                    h3
+                        "This is <UL>"
+            WHEN (data.isOL)
+                CALL ol_list (data.list) (1 + 3)
+            OTHERWISE
+                em
+                    (some_var)
+                    br
+                    (some_var2)
+                    br
+                    INSERT (some_var2)
+                    br
+                    (some_var)

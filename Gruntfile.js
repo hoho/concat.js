@@ -23,6 +23,29 @@ module.exports = function(grunt) {
                 }
             }
         },
+
+        clean: {
+            concatizeTemplates: ['tmp']
+        },
+
+        concatizeTemplates: {
+            ok: {
+                files: {
+                    'tmp/ok': ['concatizer/test/tpl1.ctpl', 'concatizer/test/tpl2.ctpl']
+                }
+            },
+            empty: {
+                files: {
+                    'tmp/error': ['concatizer/test/tpl3.ctpl']
+                }
+            },
+            nofile: {
+                src: ['concatizer/test/tpl1.ctpl', 'this/file/is/not/there', 'concatizer/test/tpl2.ctpl'],
+                dest: 'tmp/nofile',
+                nonull: true
+            }
+        },
+
         uglify: {
             options: {
                 preserveComments: 'some',
@@ -35,8 +58,11 @@ module.exports = function(grunt) {
         }
     });
 
+    grunt.loadTasks('tasks');
+
     grunt.loadNpmTasks('grunt-contrib-jshint');
+    grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-uglify');
 
-    grunt.registerTask('default', ['jshint', 'uglify']);
+    grunt.registerTask('default', ['jshint', 'clean', 'concatizeTemplates', 'uglify']);
 };
