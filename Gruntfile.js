@@ -22,11 +22,16 @@ module.exports = function(grunt) {
                 src: 'concat.js',
                 dest: 'concat.min.js'
             }
+        },
+
+        qunit: {
+            all: ['test/**/*.html']
         }
     });
 
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-qunit');
 
-    grunt.registerTask('default', ['jshint', 'uglify']);
+    grunt.registerTask('default', ['jshint', 'uglify', 'qunit']);
 };
