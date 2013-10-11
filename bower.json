@@ -1,6 +1,6 @@
 {
   "name": "concat.js",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "homepage": "https://github.com/hoho/concat.js",
   "authors": [
     "Marat Abdullin <dakota@brokenpipe.ru>"
@@ -8,7 +8,8 @@
   "description": "Chainable DOM Builder",
   "main": "concat.js",
   "keywords": [
-    "DOM"
+    "DOM",
+    "builder"
   ],
   "license": "MIT",
   "ignore": [

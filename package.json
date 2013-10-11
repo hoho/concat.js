@@ -1,12 +1,10 @@
 {
   "name": "concat.js",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "Chainable DOM Builder",
   "main": "concat.js",
   "directories": {
-    "test": "test",
-    "concatizer": "concatizer",
-    "concatizer/test": "concatizer/test"
+    "test": "test"
   },
   "scripts": {
     "test": "grunt"
@@ -17,21 +15,17 @@
   },
   "keywords": [
     "DOM",
-    "templates"
+    "builder"
   ],
   "author": "Marat Abdullin <dakota@brokenpipe.ru>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/hoho/concat.js/issues"
   },
-  "bin": {
-      "concatize": "concatizer/bin/concatize"
-  },
   "dependencies": {},
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-contrib-jshint": "~0.6.4",
-    "grunt-contrib-clean": "~0.4.0",
     "grunt-contrib-uglify": "~0.2.4"
   }
 }
