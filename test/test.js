@@ -547,3 +547,69 @@ test('concat.js ret test', function() {
 
     container.innerHTML = '';
 });
+
+test('concat.js each test', function() {
+    var container = document.getElementById('container'),
+        data = {'aa': 11, 'bb': 22};
+
+    $C(container)
+        .each(data)
+            .text(function(value, key, obj) {
+                return '|' + value + '|' + key + '|' + (data === obj)  + '|';
+            })
+        .end()
+    .end();
+
+    domEqual(domToArray(container), [
+        '|11|aa|true|',
+        '|22|bb|true|'
+    ]);
+
+    container.innerHTML = '';
+
+    $C(container)
+        .each(function() { data['cc'] = 33; return data; })
+            .text(function(value, key, obj) {
+                return '|' + value + '|' + key + '|' + (data === obj)  + '|';
+            })
+        .end()
+    .end();
+
+    domEqual(domToArray(container), [
+        '|11|aa|true|',
+        '|22|bb|true|',
+        '|33|cc|true|'
+    ]);
+
+    container.innerHTML = '';
+
+    $C(container).each({}).text('ololo').end().end();
+    domEqual(domToArray(container), []);
+
+    $C(container).each(null).text('alala').end().end();
+    domEqual(domToArray(container), []);
+
+    $C(container).each(function() { return null; }).text('ululu').end().end();
+    domEqual(domToArray(container), []);
+
+    $C(container).each(undefined).text('ylyly').end().end();
+    domEqual(domToArray(container), []);
+
+    $C(container).each(123).text('ilili').end().end();
+    domEqual(domToArray(container), []);
+
+    $C(container)
+        .each('hi')
+            .text(function(value, key, obj) {
+                return '|' + value + '|' + key + '|' + obj + '|';
+            })
+        .end()
+    .end();
+
+    domEqual(domToArray(container), [
+        '|h|0|hi|',
+        '|i|1|hi|'
+    ]);
+
+    container.innerHTML = '';
+});
