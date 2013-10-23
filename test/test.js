@@ -613,3 +613,39 @@ test('concat.js each test', function() {
 
     container.innerHTML = '';
 });
+
+test('concat.js unescaped text', function() {
+    var container = document.getElementById('container');
+
+    $C(container)
+        .text('<p>hello</p><a>world</a>!')
+        .text('<p>hello</p><a>world</a>!', true)
+    .end();
+
+    domEqual(domToArray(container), [
+        '<p>hello</p><a>world</a>!',
+        {name: 'p', children: ['hello']},
+        {name: 'a', children: ['world']},
+        '!'
+    ]);
+
+    container.innerHTML = '';
+
+    $C(container)
+        .div()
+            .text('<p>hello</p><a>world</a>!', true)
+            .text('<p>hello</p><a>world</a>!')
+        .end()
+    .end();
+
+    domEqual(domToArray(container), [
+        {name: 'div', children: [
+            {name: 'p', children: ['hello']},
+            {name: 'a', children: ['world']},
+            '!',
+            '<p>hello</p><a>world</a>!'
+        ]}
+    ]);
+
+    container.innerHTML = '';
+});
