@@ -6,7 +6,7 @@ Chainable DOM Builder
 ## How to use
 
 ```js
-$C(parentNode, replace, noFragment)
+$C(parentNode, replace, mem)
     ...
 .end();
 ```
@@ -15,9 +15,8 @@ $C(parentNode, replace, noFragment)
 
 `replace` is a boolean value indicates that `parentNode`'s content should be replaced with newly built content (newly built content is being appended to the current one when `replace` is coerced to `false`).
 
-`noFragment` indicates that **concat.js** shouldn't use documentFragment and should put the result directly to `parentNode`.
-
 Return value is a dictionary of memorized results (see below). If `parentNode` is undefined, result's documentFragment will be inserted into this dictionary with `dom` key.
+You can pass an initial dictionary with `mem` argument.
 
 
 ## Usage example
@@ -171,3 +170,19 @@ var memorized = $C(document.body)
 In this example `memorized` will be:
 
     {helloDiv: <div>​hello​</div>​, each0: '0 11 span', each1: '1 22 span'}
+
+
+Another example (with `mem` argument):
+
+```js
+var memorized = $C(document.body, false, {aa: 123, bb: 234})
+    .div()
+        .mem('aa')
+        .text('hello')
+    .end()
+.end();
+```
+
+And `memorized` will be:
+
+    {aa: <div>​hello​</div>​, bb: 234}

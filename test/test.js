@@ -412,28 +412,6 @@ test('concat.js complex test', function() {
     container.innerHTML = '';
 });
 
-test('concat.js noFragment test', function() {
-    var container = document.getElementById('container'),
-        tmp;
-
-    // Ignore noFragment == true when no parent.
-    tmp = $C(null, true, true).text('text').end();
-
-    tmp = tmp.dom;
-    deepEqual(tmp.nodeType, 11);
-
-    tmp = $C(container, false, true).text('text2').end();
-    deepEqual(tmp, {});
-    domEqual(domToArray(container), ['text2']);
-
-    // Ignore replace == true when nofragment == true.
-    tmp = $C(container, true, true).text('text3').end();
-    deepEqual(tmp, {});
-    domEqual(domToArray(container), ['text2', 'text3']);
-
-    container.innerHTML = '';
-});
-
 test('concat.js define test', function() {
     var actual = [];
 
@@ -529,7 +507,7 @@ test('concat.js ret test', function() {
     deepEqual(tmp['aaa5'].tagName.toLowerCase(), 'p');
     deepEqual(tmp['bbb6'], "'1 33 [22,33] p'");
 
-    tmp = $C()
+    tmp = $C(undefined, undefined, {aa: 'haha', 'bobo': 'baba'})
         .mem('aa', function() { return 'zzz'; })
         .mem('bb')
         .div()
@@ -541,6 +519,7 @@ test('concat.js ret test', function() {
     deepEqual(tmp.aa, 'zzz');
     deepEqual(tmp.bb.nodeType, 11);
     deepEqual(tmp.cc.tagName.toLowerCase(), 'div');
+    deepEqual(tmp.bobo, 'baba');
 
     container.innerHTML = '';
 });
