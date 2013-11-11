@@ -1,5 +1,5 @@
 /*!
- * concat.js v0.6.2, https://github.com/hoho/concat.js
+ * concat.js v0.7.0, https://github.com/hoho/concat.js
  * (c) 2013 Marat Abdullin, MIT license
  */
 (function(document, undefined) {
@@ -51,7 +51,7 @@
 
                 var self = this;
 
-                self.m = [];
+                self.m = {};
 
                 self._ = self.c = {
                     D: parent && {p: parent, r: replace, n: noFragment},
@@ -168,7 +168,7 @@
                     i.p[appendChildString](r.P);
                 }
             } else {
-                self.m.unshift(r.P);
+                self.m.dom = r.P;
             }
 
             return self.m;
@@ -224,11 +224,12 @@
                 self;
         },
 
-        mem: function(func) {
+        mem: function(key, func) {
             var self = this,
-                item = Item(self, function(parentElem) {
+                item = Item(self, function(/**/parentElem) {
                     parentElem = item.A.P;
-                    self.m.push(isFunction(func) ? func[applyString](parentElem, curArgs) : parentElem);
+                    self.m[isFunction(key) ? key[applyString](parentElem, curArgs) : key] =
+                        isFunction(func) ? func[applyString](parentElem, curArgs) : parentElem;
                 });
 
             return self;

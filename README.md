@@ -17,7 +17,7 @@ $C(parentNode, replace, noFragment)
 
 `noFragment` indicates that **concat.js** shouldn't use documentFragment and should put the result directly to `parentNode`.
 
-Return value is an array of memorized results (see below). If `parentNode` is undefined, result's documentFragment will be prepended to this array.
+Return value is a dictionary of memorized results (see below). If `parentNode` is undefined, result's documentFragment will be inserted into this dictionary with `dom` key.
 
 
 ## Usage example
@@ -148,17 +148,19 @@ $C(document.body)
 
 ## Memorize results
 
-On every step of DOM building, we can memorize nodes and other data. An array of memorized items is returned with the last .end() call:
+On every step of DOM building, we can memorize nodes and other data. A dictionary of memorized items is returned with the last .end() call:
 
 ```js
 var memorized = $C(document.body)
     .div()
-        .mem()
+        .mem('helloDiv')
         .text('hello')
     .end()
     .each([11, 22])
         .span()
             .mem(function(item, index, arr) {
+                return 'each' + index;
+            }, function(item, index, arr) {
                 return index + ' ' + item + ' ' + this.tagName.toLowerCase();
             })
         .end()
@@ -168,4 +170,4 @@ var memorized = $C(document.body)
 
 In this example `memorized` will be:
 
-    [<div>​hello​</div>​, '0 11 span', '1 22 span']
+    {helloDiv: <div>​hello​</div>​, each0: '0 11 span', each1: '1 22 span'}

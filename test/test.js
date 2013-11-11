@@ -117,15 +117,13 @@ test('concat.js undefined values', function() {
 test('concat.js return value', function() {
     var container = document.getElementById('container');
 
-    deepEqual($C(container).text('text1').end(), []);
+    deepEqual($C(container).text('text1').end(), {});
 
     container.innerHTML = '';
 
     var tmp = $C().text('text2').br(true).end();
 
-    deepEqual(tmp.length, 1);
-
-    tmp = tmp[0];
+    tmp = tmp.dom;
     deepEqual(tmp.nodeType, 11);
     deepEqual(tmp.firstChild.nodeValue, 'text2');
     deepEqual(tmp.lastChild.tagName.toLowerCase(), 'br');
@@ -421,17 +419,16 @@ test('concat.js noFragment test', function() {
     // Ignore noFragment == true when no parent.
     tmp = $C(null, true, true).text('text').end();
 
-    deepEqual(tmp.length, 1);
-    tmp = tmp[0];
+    tmp = tmp.dom;
     deepEqual(tmp.nodeType, 11);
 
     tmp = $C(container, false, true).text('text2').end();
-    deepEqual(tmp, []);
+    deepEqual(tmp, {});
     domEqual(domToArray(container), ['text2']);
 
     // Ignore replace == true when nofragment == true.
     tmp = $C(container, true, true).text('text3').end();
-    deepEqual(tmp, []);
+    deepEqual(tmp, {});
     domEqual(domToArray(container), ['text2', 'text3']);
 
     container.innerHTML = '';
@@ -495,27 +492,28 @@ test('concat.js define test', function() {
 
 test('concat.js ret test', function() {
     var container = document.getElementById('container'),
-        tmp;
+        tmp,
+        num = 0;
 
     tmp = $C(container)
         .div()
             .text('aaa')
-            .mem()
+            .mem(num++)
         .end()
         .span()
-            .mem()
-            .mem(function(item, index, arr) { return 'hehe'; })
+            .mem(num++)
+            .mem(num++, function(item, index, arr) { return 'hehe'; })
         .end()
         .each([22, 33])
             .p()
-                .mem()
+                .mem(function() { return 'aaa' + num++; })
                 .text('ho')
-                .mem(function(item, index, arr) { return "'" + index + ' ' + item + ' ' + arrayToString(arr) + ' ' + this.tagName.toLowerCase() + "'"; })
+                .mem(function() { return 'bbb' + num++; },
+                     function(item, index, arr) { return "'" + index + ' ' + item + ' ' + arrayToString(arr) + ' ' + this.tagName.toLowerCase() + "'"; })
             .end()
         .end()
     .end();
 
-    deepEqual(tmp.length, 7);
     domEqual(domToArray(container), [
         {name: 'div', children: ['aaa']},
         {name: 'span', children: []},
@@ -526,24 +524,23 @@ test('concat.js ret test', function() {
     deepEqual(tmp[0].tagName.toLowerCase(), 'div');
     deepEqual(tmp[1].tagName.toLowerCase(), 'span');
     deepEqual(tmp[2], 'hehe');
-    deepEqual(tmp[3].tagName.toLowerCase(), 'p');
-    deepEqual(tmp[4], "'0 22 [22,33] p'");
-    deepEqual(tmp[5].tagName.toLowerCase(), 'p');
-    deepEqual(tmp[6], "'1 33 [22,33] p'");
+    deepEqual(tmp['aaa3'].tagName.toLowerCase(), 'p');
+    deepEqual(tmp['bbb4'], "'0 22 [22,33] p'");
+    deepEqual(tmp['aaa5'].tagName.toLowerCase(), 'p');
+    deepEqual(tmp['bbb6'], "'1 33 [22,33] p'");
 
     tmp = $C()
-        .mem(function() { return 'zzz'; })
-        .mem()
+        .mem('aa', function() { return 'zzz'; })
+        .mem('bb')
         .div()
-            .mem()
+            .mem('cc')
         .end()
     .end();
 
-    deepEqual(tmp.length, 4);
-    deepEqual(tmp[0].nodeType, 11);
-    deepEqual(tmp[1], 'zzz');
-    deepEqual(tmp[2].nodeType, 11);
-    deepEqual(tmp[3].tagName.toLowerCase(), 'div');
+    deepEqual(tmp.dom.nodeType, 11);
+    deepEqual(tmp.aa, 'zzz');
+    deepEqual(tmp.bb.nodeType, 11);
+    deepEqual(tmp.cc.tagName.toLowerCase(), 'div');
 
     container.innerHTML = '';
 });
