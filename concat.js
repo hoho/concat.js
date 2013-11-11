@@ -1,5 +1,5 @@
 /*!
- * concat.js v0.8.0, https://github.com/hoho/concat.js
+ * concat.js v0.8.1, https://github.com/hoho/concat.js
  * (c) 2013 Marat Abdullin, MIT license
  */
 (function(document, undefined) {
@@ -227,7 +227,7 @@
                 item = Item(self, function(/**/parentElem) {
                     parentElem = item.A.P;
                     self.m[isFunction(key) ? key[applyString](parentElem, curArgs) : key] =
-                        isFunction(func) ? func[applyString](parentElem, curArgs) : parentElem;
+                        isFunction(func) ? func[applyString](parentElem, curArgs) : func || parentElem;
                 });
 
             return self;

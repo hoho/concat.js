@@ -513,12 +513,14 @@ test('concat.js ret test', function() {
         .div()
             .mem('cc')
         .end()
+        .mem('dd', 'ee')
     .end();
 
     deepEqual(tmp.dom.nodeType, 11);
     deepEqual(tmp.aa, 'zzz');
     deepEqual(tmp.bb.nodeType, 11);
     deepEqual(tmp.cc.tagName.toLowerCase(), 'div');
+    deepEqual(tmp.dd, 'ee');
     deepEqual(tmp.bobo, 'baba');
 
     container.innerHTML = '';
