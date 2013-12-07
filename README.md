@@ -6,17 +6,19 @@ Chainable DOM Builder
 ## How to use
 
 ```js
-$C(parentNode, replace, mem)
+$C(parentNode, replace)
     ...
 .end();
 ```
 
 `parentNode` is a DOM element to put the result into.
 
-`replace` is a boolean value indicates that `parentNode`'s content should be replaced with newly built content (newly built content is being appended to the current one when `replace` is coerced to `false`).
+`replace` is a boolean value indicates that `parentNode`'s content should be
+replaced with newly built content (newly built content will be appended to the
+current one when `replace` is coerced to `false`).
 
-Return value is a dictionary of memorized results (see below). If `parentNode` is undefined, result's documentFragment will be inserted into this dictionary with `dom` key.
-You can pass an initial dictionary with `mem` argument.
+Return value is the result's documentFragment in case `parentNode` is not
+passed. When `parentNode` is passed, return value is undefined.
 
 
 ## Usage example
@@ -130,7 +132,8 @@ $C(document.body)
 
 ## Define custom actions
 
-You can define custom actions for build process. For example, if you use jQuery, you can define an action for event handlers binding like below:
+You can define custom actions for build process. For example, if you use
+jQuery, you can define an action for event handlers binding like below:
 
 ```js
 $C.define('on', function(item, index, arr, args) {
@@ -147,10 +150,13 @@ $C(document.body)
 
 ## Memorize results
 
-On every step of DOM building, we can memorize nodes and other data. A dictionary of memorized items is returned with the last .end() call:
+On every step of DOM building, we can memorize nodes and other data. Memorized
+items are being put into `$C.mem` dictionary. `$C.mem` dictionary is initially
+empty, but it is shared between different `$C()` calls. You may want to reset
+this dictionary manually like `$C.mem = {}`.
 
 ```js
-var memorized = $C(document.body)
+$C(document.body)
     .div()
         .mem('helloDiv')
         .text('hello')
@@ -167,7 +173,7 @@ var memorized = $C(document.body)
 .end();
 ```
 
-In this example `memorized` will be:
+In this example `$C.mem` will be:
 
     {helloDiv: <div>​hello​</div>​, each0: '0 11 span', each1: '1 22 span'}
 
@@ -175,7 +181,9 @@ In this example `memorized` will be:
 Another example (with `mem` argument):
 
 ```js
-var memorized = $C(document.body, false, {aa: 123, bb: 234})
+$C.mem = {aa: 123, bb: 234};
+
+$C(document.body)
     .div()
         .mem('aa')
         .text('hello')
@@ -183,6 +191,6 @@ var memorized = $C(document.body, false, {aa: 123, bb: 234})
 .end();
 ```
 
-And `memorized` will be:
+And `$C.mem` will be:
 
     {aa: <div>​hello​</div>​, bb: 234}

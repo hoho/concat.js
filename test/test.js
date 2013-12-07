@@ -117,13 +117,12 @@ test('concat.js undefined values', function() {
 test('concat.js return value', function() {
     var container = document.getElementById('container');
 
-    deepEqual($C(container).text('text1').end(), {});
+    deepEqual($C(container).text('text1').end(), undefined);
 
     container.innerHTML = '';
 
     var tmp = $C().text('text2').br(true).end();
 
-    tmp = tmp.dom;
     deepEqual(tmp.nodeType, 11);
     deepEqual(tmp.firstChild.nodeValue, 'text2');
     deepEqual(tmp.lastChild.tagName.toLowerCase(), 'br');
@@ -492,6 +491,8 @@ test('concat.js ret test', function() {
         .end()
     .end();
 
+    deepEqual(tmp, undefined);
+
     domEqual(domToArray(container), [
         {name: 'div', children: ['aaa']},
         {name: 'span', children: []},
@@ -499,15 +500,17 @@ test('concat.js ret test', function() {
         {name: 'p', children: ['ho']}
     ]);
 
-    deepEqual(tmp[0].tagName.toLowerCase(), 'div');
-    deepEqual(tmp[1].tagName.toLowerCase(), 'span');
-    deepEqual(tmp[2], 'hehe');
-    deepEqual(tmp['aaa3'].tagName.toLowerCase(), 'p');
-    deepEqual(tmp['bbb4'], "'0 22 [22,33] p'");
-    deepEqual(tmp['aaa5'].tagName.toLowerCase(), 'p');
-    deepEqual(tmp['bbb6'], "'1 33 [22,33] p'");
+    deepEqual($C.mem[0].tagName.toLowerCase(), 'div');
+    deepEqual($C.mem[1].tagName.toLowerCase(), 'span');
+    deepEqual($C.mem[2], 'hehe');
+    deepEqual($C.mem['aaa3'].tagName.toLowerCase(), 'p');
+    deepEqual($C.mem['bbb4'], "'0 22 [22,33] p'");
+    deepEqual($C.mem['aaa5'].tagName.toLowerCase(), 'p');
+    deepEqual($C.mem['bbb6'], "'1 33 [22,33] p'");
 
-    tmp = $C(undefined, undefined, {aa: 'haha', 'bobo': 'baba'})
+    $C.mem = {aa: 'haha', 'bobo': 'baba'};
+
+    tmp = $C()
         .mem('aa', function() { return 'zzz'; })
         .mem('bb')
         .div()
@@ -516,12 +519,14 @@ test('concat.js ret test', function() {
         .mem('dd', 'ee')
     .end();
 
-    deepEqual(tmp.dom.nodeType, 11);
-    deepEqual(tmp.aa, 'zzz');
-    deepEqual(tmp.bb.nodeType, 11);
-    deepEqual(tmp.cc.tagName.toLowerCase(), 'div');
-    deepEqual(tmp.dd, 'ee');
-    deepEqual(tmp.bobo, 'baba');
+    deepEqual(tmp.nodeType, 11);
+    deepEqual($C.mem.aa, 'zzz');
+    deepEqual($C.mem.bb.nodeType, 11);
+    deepEqual($C.mem.cc.tagName.toLowerCase(), 'div');
+    deepEqual($C.mem.dd, 'ee');
+    deepEqual($C.mem.bobo, 'baba');
+
+    $C.mem = {};
 
     container.innerHTML = '';
 });
