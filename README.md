@@ -178,7 +178,7 @@ In this example `$C.mem` will be:
     {helloDiv: <div>​hello​</div>​, each0: '0 11 span', each1: '1 22 span'}
 
 
-Another example (with `mem` argument):
+Another example (with `mem` resetting):
 
 ```js
 $C.mem = {aa: 123, bb: 234};
