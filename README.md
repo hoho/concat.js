@@ -53,7 +53,7 @@ $C(document.body)
     .end()
     .div()
         .text('hello')
-        .act(function() { this.innerHTML += '<br>'; })
+        .text('<br>', true) // It is possible to add unescaped markup fragments.
         .text('world')
     .end()
     .test(1 === 1) // .test() is used for conditional processing.
