@@ -632,3 +632,33 @@ test('concat.js unescaped text', function() {
 
     container.innerHTML = '';
 });
+
+test('concat.js function as element name and attributes object test', function() {
+    var container = document.getElementById('container'),
+        ret = [];
+
+    $C(container, true)
+        .elem(function(item, index, arr) { ret.push("'" + index + ' ' + item + ' ' + arrayToString(arr) + ' ' + (this.tagName || 'fragment').toLowerCase() + "'"); return 'em' })
+            .text('om')
+        .end()
+        .each(['aa'])
+            .div()
+                .elem(function(item, index, arr) { ret.push("'" + index + ' ' + item + ' ' + arrayToString(arr) + ' ' + (this.tagName || 'fragment').toLowerCase() + "'"); return 'strong' })
+                    .text('really')
+                .end()
+                .div(function(item, index, arr) { return {hello: "'" + index + ' ' + item + ' ' + arrayToString(arr) + ' ' + (this.tagName || 'fragment').toLowerCase() + "'"}; })
+                    .text('indeed')
+    .end(4);
+
+    domEqual(domToArray(container), [
+        {name: 'em', children: ['om']},
+        {name: 'div', children: [
+            {name: 'strong', children: ['really']},
+            {name: 'div', attr: {hello: "'0 aa [aa] div'"}, children: ['indeed']}
+        ]}
+    ]);
+
+    deepEqual(ret, ["'undefined undefined undefined fragment'", "'0 aa [aa] div'"], 'Same context');
+
+    container.innerHTML = '';
+});
