@@ -10,8 +10,6 @@ var $C;
     // a bit hard to read. But it is quite short anyway.
 
     var tags = 'div|span|p|a|ul|ol|li|table|tr|td|th|br|img|b|i|s|u'.split('|'),
-        appendChildString = 'appendChild',
-        applyString = 'apply',
         proto,
         i,
         curArgs = [],
@@ -72,7 +70,7 @@ var $C;
 
                 if (item.E !== undefined) {
                     eachTarget = isFunction(item.E) ?
-                        item.E[applyString](item.A.P, curArgs)
+                        item.E.apply(item.A.P, curArgs)
                         :
                         item.E;
 
@@ -107,7 +105,7 @@ var $C;
                     };
                 } else {
                     i = isFunction(item.T) ?
-                        (item.T[applyString](item.A.P, curArgs) ? 1 : 0)
+                        (item.T.apply(item.A.P, curArgs) ? 1 : 0)
                         :
                         (item.T === undefined) || item.T ? 1 : 0;
                 }
@@ -164,7 +162,7 @@ var $C;
                     i.p.innerHTML = '';
                 }
 
-                i.p[appendChildString](r.P);
+                i.p.appendChild(r.P);
             } else {
                 return r.P;
             }
@@ -174,16 +172,16 @@ var $C;
             var self = this,
                 item = Item(self, function(elem/**/, a, prop, val, tmp) {
                     elem = item.P = document.createElement(
-                        isFunction(name) ? name[applyString](item.A.P, curArgs) : name
+                        isFunction(name) ? name.apply(item.A.P, curArgs) : name
                     );
 
                     if (isFunction(attr)) {
-                        attr = attr[applyString](elem, curArgs);
+                        attr = attr.apply(elem, curArgs);
                     }
 
                     for (var i in attr) {
                         if (isFunction((a = attr[i]))) {
-                            a = a[applyString](elem, curArgs);
+                            a = a.apply(elem, curArgs);
                         }
 
                         if (a !== undefined) {
@@ -193,7 +191,7 @@ var $C;
 
                                     for (prop in a) {
                                         if (isFunction((tmp = a[prop]))) {
-                                            tmp = tmp[applyString](elem, curArgs);
+                                            tmp = tmp.apply(elem, curArgs);
                                         }
 
                                         if (tmp !== undefined) {
@@ -213,7 +211,7 @@ var $C;
                         }
                     }
 
-                    item.A.P[appendChildString](elem);
+                    item.A.P.appendChild(elem);
                 });
 
             self.c = item;
@@ -230,8 +228,8 @@ var $C;
             var self = this,
                 item = Item(self, function(/**/parentElem) {
                     parentElem = item.A.P;
-                    $C.mem[isFunction(key) ? key[applyString](parentElem, curArgs) : key] =
-                        isFunction(func) ? func[applyString](parentElem, curArgs) : func || parentElem;
+                    $C.mem[isFunction(key) ? key.apply(parentElem, curArgs) : key] =
+                        isFunction(func) ? func.apply(parentElem, curArgs) : func || parentElem;
                 });
 
             return self;
@@ -249,7 +247,7 @@ var $C;
             condFunc = function(isOtherwise/**/, val) {
                 return function(test) {
                     val = blockFunc('T').call(self, function() {
-                        return (!skip && (isOtherwise || (isFunction(test) ? test[applyString](item.A.P, curArgs) : test))) ?
+                        return (!skip && (isOtherwise || (isFunction(test) ? test.apply(item.A.P, curArgs) : test))) ?
                             (skip = true)
                             :
                             false;
@@ -298,12 +296,12 @@ var $C;
     // We're inside and we have an access to curArgs variable which is
     // [index, item], so we will use curArgs to shorten the code.
     i('act', function(item, index, arr, args) {
-        args[0][applyString](this, curArgs);
+        args[0].apply(this, curArgs);
     });
 
     i('text', function(item, index, arr, args/**/, text, el) {
         text = args[0];
-        text = isFunction(text) ? text[applyString](this, curArgs) : text;
+        text = isFunction(text) ? text.apply(this, curArgs) : text;
 
         if (text !== undefined) {
             if (args[1]) {
@@ -313,11 +311,11 @@ var $C;
                 while (el) {
                     // Use text variable as a temporary variable.
                     text = el.nextSibling;
-                    this[appendChildString](el);
+                    this.appendChild(el);
                     el = text;
                 }
             } else {
-                this[appendChildString](document.createTextNode(text));
+                this.appendChild(document.createTextNode(text));
             }
         }
 
