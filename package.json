@@ -1,6 +1,6 @@
 {
   "name": "concat.js",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Chainable DOM Builder",
   "main": "concat.js",
   "directories": {

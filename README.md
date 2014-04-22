@@ -5,7 +5,7 @@ Chainable DOM Builder
 ## How to use
 
 ```js
-$C(parentNode, replace)
+$C(parentNode, replace, direct)
     ...
 .end();
 ```
@@ -15,6 +15,9 @@ $C(parentNode, replace)
 `replace` is a boolean value indicates that `parentNode`'s content should be
 replaced with newly built content (newly built content will be appended to the
 current one when `replace` is coerced to `false`).
+
+`direct` indicates that everything should be rendered directly to `parentNode`
+right away (skipping documentFragment creation).
 
 Return value is the result's documentFragment in case `parentNode` is not
 passed. When `parentNode` is passed, return value is undefined.

@@ -1,5 +1,5 @@
 /*!
- * concat.js v0.9.1, https://github.com/hoho/concat.js
+ * concat.js v0.9.2, https://github.com/hoho/concat.js
  * (c) 2013 Marat Abdullin, MIT license
  */
 
@@ -34,7 +34,7 @@ var $C;
             },
 
         constr =
-            function(parent, replace) {
+            function(parent, replace, direct) {
                 // Item:
                 // D — node to append the result to (if any).
                 // P — item's parent node.
@@ -53,7 +53,7 @@ var $C;
 
                 self._ = self.c = {
                     D: parent && {p: parent, r: replace},
-                    P: document.createDocumentFragment(),
+                    P: parent && ((self.d = direct)) ? parent : document.createDocumentFragment(),
                     _: []
                 };
             },
@@ -139,101 +139,104 @@ var $C;
                 return ret;
             };
 
-    constr.prototype = proto = {
-        end: function(num) {
-            var self = this,
-                r,
-                ret;
+    proto = constr.prototype;
 
-            if (num === undefined) { num = 1; }
+    proto.end = function(num) {
+        var self = this,
+            r,
+            ret;
 
-            while (num > 0 && ((ret = self.c.e), (self.c = self.c.A))) {
-                num--;
+        if (num === undefined) { num = 1; }
+
+        while (num > 0 && ((ret = self.c.e), (self.c = self.c.A))) {
+            num--;
+        }
+
+        if (self.c) { return ret || self; }
+
+        r = self._;
+
+        run(r);
+
+        if ((i = r.D)) {
+            if (i.r) {
+                i.p.innerHTML = '';
             }
 
-            if (self.c) { return ret || self; }
+            if (!self.d) {
+                // It's a direct rendering, everything is already there.
+                i.p.appendChild(r.P);
+            }
+        } else {
+            return r.P;
+        }
+    };
 
-            r = self._;
+    proto.elem = function(name, attr, close) {
+        var self = this,
+            item = Item(self, function(elem/**/, a, prop, val, tmp) {
+                elem = item.P = document.createElement(
+                    isFunction(name) ? name.apply(item.A.P, curArgs) : name
+                );
 
-            run(r);
-
-            if ((i = r.D)) {
-                if (i.r) {
-                    i.p.innerHTML = '';
+                if (isFunction(attr)) {
+                    attr = attr.apply(elem, curArgs);
                 }
 
-                i.p.appendChild(r.P);
-            } else {
-                return r.P;
-            }
-        },
-
-        elem: function(name, attr, close) {
-            var self = this,
-                item = Item(self, function(elem/**/, a, prop, val, tmp) {
-                    elem = item.P = document.createElement(
-                        isFunction(name) ? name.apply(item.A.P, curArgs) : name
-                    );
-
-                    if (isFunction(attr)) {
-                        attr = attr.apply(elem, curArgs);
+                for (var i in attr) {
+                    if (isFunction((a = attr[i]))) {
+                        a = a.apply(elem, curArgs);
                     }
 
-                    for (var i in attr) {
-                        if (isFunction((a = attr[i]))) {
-                            a = a.apply(elem, curArgs);
-                        }
+                    if (a !== undefined) {
+                        if (i === 'style') {
+                            if (typeof a === 'object') {
+                                val = [];
 
-                        if (a !== undefined) {
-                            if (i === 'style') {
-                                if (typeof a === 'object') {
-                                    val = [];
-
-                                    for (prop in a) {
-                                        if (isFunction((tmp = a[prop]))) {
-                                            tmp = tmp.apply(elem, curArgs);
-                                        }
-
-                                        if (tmp !== undefined) {
-                                            val.push(prop + ': ' + tmp);
-                                        }
+                                for (prop in a) {
+                                    if (isFunction((tmp = a[prop]))) {
+                                        tmp = tmp.apply(elem, curArgs);
                                     }
 
-                                    a = val.join('; ');
+                                    if (tmp !== undefined) {
+                                        val.push(prop + ': ' + tmp);
+                                    }
                                 }
 
-                                if (a) {
-                                    elem.style.cssText = a;
-                                }
-                            } else {
-                                elem.setAttribute(i, a);
+                                a = val.join('; ');
                             }
+
+                            if (a) {
+                                elem.style.cssText = a;
+                            }
+                        } else {
+                            elem.setAttribute(i, a);
                         }
                     }
+                }
 
-                    item.A.P.appendChild(elem);
-                });
+                item.A.P.appendChild(elem);
+            });
 
-            self.c = item;
+        self.c = item;
 
-            // attr argument is optional, if it strictly equals to true,
-            // use it as close, when close is not passed.
-            return close || (close === undefined && attr === true) ?
-                self.end()
-                :
-                self;
-        },
+        // attr argument is optional, if it strictly equals to true,
+        // use it as close, when close is not passed.
+        return close || (close === undefined && attr === true) ?
+            self.end()
+            :
+            self;
+    };
 
-        mem: function(key, func) {
-            var self = this,
-                item = Item(self, function(/**/parentElem) {
-                    parentElem = item.A.P;
-                    $C.mem[isFunction(key) ? key.apply(parentElem, curArgs) : key] =
-                        isFunction(func) ? func.apply(parentElem, curArgs) : func || parentElem;
-                });
+    proto.mem = function(key, func) {
+        var self = this,
+            item = Item(self, function(/**/parentElem) {
+                parentElem = item.A.P;
+                $C.mem[isFunction(key) ? key.apply(parentElem, curArgs) : key] =
+                    isFunction(func) ? func.apply(parentElem, curArgs) : func || parentElem;
+            });
 
-            return self;
-        }
+        return self;
     };
 
     proto.repeat = blockFunc('R', 0);
@@ -276,8 +279,8 @@ var $C;
         })(tags[i]);
     }
 
-    $C = i = function(parent, replace) {
-        return new constr(parent, replace);
+    $C = i = function(parent, replace, direct) {
+        return new constr(parent, replace, direct);
     };
 
     i.mem = {};

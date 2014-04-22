@@ -662,3 +662,36 @@ test('concat.js function as element name and attributes object test', function()
 
     container.innerHTML = '';
 });
+
+test('concat.js test direct result generation', function() {
+    var container = document.getElementById('container'),
+        ret;
+
+    $C(container)
+        .div()
+            .act(function() {
+                $C(this, false, true)
+                    .attr('attr1', 'val1')
+                    .attr(function() { return 'attr2'; }, function() { return 'val2'; })
+                .end();
+            })
+        .end()
+        .p()
+            .act(function() {
+                ret = this;
+            })
+    .end(2);
+
+    $C(ret, false, true)
+        .span().text('Hello').end()
+        .attr('aaa', 'bbb')
+    .end();
+
+
+    domEqual(domToArray(container), [
+        {name: 'div', attr: {attr1: 'val1', attr2: 'val2'}, children: []},
+        {name: 'p', attr: {aaa: 'bbb'}, children: [{name: 'span', children: ['Hello']}]}
+    ]);
+
+    container.innerHTML = '';
+});
