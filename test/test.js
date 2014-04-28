@@ -711,7 +711,7 @@ test('concat.js test direct result generation', function() {
 });
 
 
-test('concat.js propert lazy attributes object value', function() {
+test('concat.js proper lazy attributes object value', function() {
     var container = document.getElementById('container'),
         index = 0;
 
@@ -719,16 +719,19 @@ test('concat.js propert lazy attributes object value', function() {
         .div()
             .repeat(5)
                 .act(function() { index++; })
-                .elem(function() { return 'e' + index; }, function() { return {a: index}; })
+                .elem(
+                    function() { return 'e' + index; },
+                    function() { return {a: index, b: function() { return index + index; }}; }
+                )
     .end(4);
 
     domEqual(domToArray(container), [
         {name: 'div', children: [
-            {name: 'e1', attr: {a: '1'}, children: []},
-            {name: 'e2', attr: {a: '2'}, children: []},
-            {name: 'e3', attr: {a: '3'}, children: []},
-            {name: 'e4', attr: {a: '4'}, children: []},
-            {name: 'e5', attr: {a: '5'}, children: []}
+            {name: 'e1', attr: {a: '1', b: '2'}, children: []},
+            {name: 'e2', attr: {a: '2', b: '4'}, children: []},
+            {name: 'e3', attr: {a: '3', b: '6'}, children: []},
+            {name: 'e4', attr: {a: '4', b: '8'}, children: []},
+            {name: 'e5', attr: {a: '5', b: '10'}, children: []}
         ]}
     ]);
 
