@@ -1,5 +1,5 @@
 /*!
- * concat.js v0.9.2, https://github.com/hoho/concat.js
+ * concat.js v0.9.3, https://github.com/hoho/concat.js
  * (c) 2013 Marat Abdullin, MIT license
  */
 
@@ -174,17 +174,15 @@ var $C;
 
     proto.elem = function(name, attr, close) {
         var self = this,
-            item = Item(self, function(elem/**/, a, prop, val, tmp) {
+            item = Item(self, function(elem/**/, a, prop, val, tmp, attrVal) {
                 elem = item.P = document.createElement(
                     isFunction(name) ? name.apply(item.A.P, curArgs) : name
                 );
 
-                if (isFunction(attr)) {
-                    attr = attr.apply(elem, curArgs);
-                }
+                attrVal = isFunction(attr) ? attr.apply(elem, curArgs) : attr;
 
-                for (var i in attr) {
-                    if (isFunction((a = attr[i]))) {
+                for (var i in attrVal) {
+                    if (isFunction((a = attrVal[i]))) {
                         a = a.apply(elem, curArgs);
                     }
 

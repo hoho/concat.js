@@ -2,6 +2,7 @@ function arrayToString(arr) {
     return arr === undefined ? 'undefined' : '[' + arr + ']';
 }
 
+
 function domToArray(node) {
     var ret = [], i, j, n, attr, a, tmp;
 
@@ -38,6 +39,7 @@ function domToArray(node) {
     return ret;
 }
 
+
 function attrEqual(val, expected) {
     var i = 0, j = 0, name;
 
@@ -56,6 +58,7 @@ function attrEqual(val, expected) {
     }
 }
 
+
 function domEqual(val, expected) {
     var i;
 
@@ -73,6 +76,7 @@ function domEqual(val, expected) {
         }
     }
 }
+
 
 test('concat.js replace content', function() {
     var container = document.getElementById('container');
@@ -96,6 +100,7 @@ test('concat.js replace content', function() {
     container.innerHTML = '';
 });
 
+
 test('concat.js undefined values', function() {
     var container = document.getElementById('container');
 
@@ -114,6 +119,7 @@ test('concat.js undefined values', function() {
     container.innerHTML = '';
 });
 
+
 test('concat.js return value', function() {
     var container = document.getElementById('container');
 
@@ -128,6 +134,7 @@ test('concat.js return value', function() {
     deepEqual(tmp.lastChild.tagName.toLowerCase(), 'br');
     domEqual(domToArray(container), []);
 });
+
 
 test('concat.js callback context', function() {
     var container = document.getElementById('container'),
@@ -262,6 +269,7 @@ test('concat.js callback context', function() {
 
     container.innerHTML = '';
 });
+
 
 test('concat.js complex test', function() {
     var container = document.getElementById('container'),
@@ -411,6 +419,7 @@ test('concat.js complex test', function() {
     container.innerHTML = '';
 });
 
+
 test('concat.js define test', function() {
     var actual = [];
 
@@ -466,6 +475,7 @@ test('concat.js define test', function() {
         "'2 333 [111,222,333] s,t,u section'"
     ]);
 });
+
 
 test('concat.js ret test', function() {
     var container = document.getElementById('container'),
@@ -530,6 +540,7 @@ test('concat.js ret test', function() {
 
     container.innerHTML = '';
 });
+
 
 test('concat.js each test', function() {
     var container = document.getElementById('container'),
@@ -597,6 +608,7 @@ test('concat.js each test', function() {
     container.innerHTML = '';
 });
 
+
 test('concat.js unescaped text', function() {
     var container = document.getElementById('container');
 
@@ -633,6 +645,7 @@ test('concat.js unescaped text', function() {
     container.innerHTML = '';
 });
 
+
 test('concat.js function as element name and attributes object test', function() {
     var container = document.getElementById('container'),
         ret = [];
@@ -663,6 +676,7 @@ test('concat.js function as element name and attributes object test', function()
     container.innerHTML = '';
 });
 
+
 test('concat.js test direct result generation', function() {
     var container = document.getElementById('container'),
         ret;
@@ -691,6 +705,31 @@ test('concat.js test direct result generation', function() {
     domEqual(domToArray(container), [
         {name: 'div', attr: {attr1: 'val1', attr2: 'val2'}, children: []},
         {name: 'p', attr: {aaa: 'bbb'}, children: [{name: 'span', children: ['Hello']}]}
+    ]);
+
+    container.innerHTML = '';
+});
+
+
+test('concat.js propert lazy attributes object value', function() {
+    var container = document.getElementById('container'),
+        index = 0;
+
+    $C(container)
+        .div()
+            .repeat(5)
+                .act(function() { index++; })
+                .elem(function() { return 'e' + index; }, function() { return {a: index}; })
+    .end(4);
+
+    domEqual(domToArray(container), [
+        {name: 'div', children: [
+            {name: 'e1', attr: {a: '1'}, children: []},
+            {name: 'e2', attr: {a: '2'}, children: []},
+            {name: 'e3', attr: {a: '3'}, children: []},
+            {name: 'e4', attr: {a: '4'}, children: []},
+            {name: 'e5', attr: {a: '5'}, children: []}
+        ]}
     ]);
 
     container.innerHTML = '';
