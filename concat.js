@@ -1,15 +1,13 @@
 /*!
- * concat.js v0.9.3, https://github.com/hoho/concat.js
- * (c) 2013 Marat Abdullin, MIT license
+ * concat.js v0.9.4, https://github.com/hoho/concat.js
+ * (c) 2013-2014 Marat Abdullin, MIT license
  */
 
-var $C;
-
-(function(document, undefined) {
+(function(window, undefined) {
     // This code is being optimized for size, so some parts of it could be
     // a bit hard to read. But it is quite short anyway.
-
-    var tags = 'div|span|p|a|ul|ol|li|table|tr|td|th|br|img|b|i|s|u'.split('|'),
+    var document = window.document,
+        tags = 'div|span|p|a|ul|ol|li|table|tr|td|th|br|img|b|i|s|u'.split('|'),
         proto,
         i,
         curArgs = [],
@@ -230,7 +228,7 @@ var $C;
         var self = this,
             item = Item(self, function(/**/parentElem) {
                 parentElem = item.A.P;
-                $C.mem[isFunction(key) ? key.apply(parentElem, curArgs) : key] =
+                window.$C.mem[isFunction(key) ? key.apply(parentElem, curArgs) : key] =
                     isFunction(func) ? func.apply(parentElem, curArgs) : func || parentElem;
             });
 
@@ -277,7 +275,7 @@ var $C;
         })(tags[i]);
     }
 
-    $C = i = function(parent, replace, direct) {
+    window.$C = i = function(parent, replace, direct) {
         return new constr(parent, replace, direct);
     };
 
@@ -328,4 +326,4 @@ var $C;
             isFunction((val = args[1])) ? val.call(self, item, index, arr) : val
         );
     });
-})(document);
+})(window);

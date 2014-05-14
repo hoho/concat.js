@@ -1,25 +1,26 @@
 {
-  "name": "concat.js",
-  "version": "0.9.3",
-  "homepage": "https://github.com/hoho/concat.js",
-  "authors": [
-    "Marat Abdullin <dakota@brokenpipe.ru>"
-  ],
-  "description": "Chainable DOM Builder",
-  "main": "concat.js",
-  "keywords": [
-    "DOM",
-    "builder"
-  ],
-  "license": "MIT",
-  "ignore": [
-    "**/.*",
-    "node_modules",
-    "bower_components",
-    "test",
-    "*.md",
-    "package.json",
-    "bower.json",
-    "Gruntfile.js"
-  ]
+    "name": "concat.js",
+    "version": "0.9.4",
+    "homepage": "https://github.com/hoho/concat.js",
+    "authors": [
+        "Marat Abdullin <dakota@brokenpipe.ru>"
+    ],
+    "description": "Chainable DOM Builder",
+    "main": "concat.js",
+    "keywords": [
+        "DOM",
+        "builder"
+    ],
+    "license": "MIT",
+    "ignore": [
+        "**/.*",
+        "node_modules",
+        "bower_components",
+        "test",
+        "*.md",
+        "package.json",
+        "bower.json",
+        "Gruntfile.js",
+        "index.js"
+    ]
 }

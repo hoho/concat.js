@@ -6,7 +6,7 @@ module.exports = function(grunt) {
 
         jshint: {
             all: {
-                src: ['concat.js', 'Gruntfile.js'],
+                src: ['concat.js', 'Gruntfile.js', 'index.js'],
                 options: {
                     jshintrc: '.jshintrc'
                 }
