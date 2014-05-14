@@ -6,7 +6,7 @@ Chainable DOM Builder
 - [Usage example](#usage-example)
 - [Define custom actions](#define-custom-actions)
 - [Memorize results](#memorize-results)
-- [Node.JS and performance notes](#node-js-and-performance-notes)
+- [Node.JS and performance notes](#nodejs-and-performance-notes)
 
 
 ## How to use
