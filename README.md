@@ -6,7 +6,6 @@ Chainable DOM Builder
 - [Usage example](#usage-example)
 - [Define custom actions](#define-custom-actions)
 - [Memorize results](#memorize-results)
-- [Node.JS and performance notes](#nodejs-and-performance-notes)
 
 
 ## How to use
@@ -205,27 +204,3 @@ $C(document.body)
 And `$C.mem` will be:
 
     {aa: <div>​hello​</div>​, bb: 234}
-
-
-## Node.JS and performance notes
-
-Since version `0.9.4`, concat.js could be used in Node.JS, it utilizes
-[jsdom](https://github.com/tmpvar/jsdom) for DOM building.
-
-Using concat.js in Node.JS is as simple as:
-
-    npm install concat.js
-
-And:
-
-    var concatjs = require('concat.js');
-
-    // concatjs.$C is concat.js itself.
-    // concatjs.window is jsdom environment.
-
-`jsdom` is not the fastest solution available, but it brings full W3C DOM
-support. My primary goal of using `jsdom` is to bring the ability to run
-[Conkitty](https://github.com/hoho/conkitty) templates on server-side to build
-static sites with minimal effort. And for static site generator high
-performance is not a very critical thing. With more efforts it is possible to
-run templates much faster and it'll probably happen some day in future.
