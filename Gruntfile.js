@@ -6,7 +6,7 @@ module.exports = function(grunt) {
 
         jshint: {
             all: {
-                src: ['concat.js', 'Gruntfile.js', 'index.js'],
+                src: ['concat.js', 'Gruntfile.js'],
                 options: {
                     jshintrc: '.jshintrc'
                 }
@@ -33,5 +33,21 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-qunit');
 
-    grunt.registerTask('default', ['jshint', 'uglify', 'qunit']);
+    grunt.registerTask('assert-version', function() {
+        var assertVersion = require('assert-version'),
+            error;
+
+        error = assertVersion({
+            'concat.js': '',
+            'concat.min.js': '',
+            'bower.json': ''
+        });
+
+        if (error) {
+            grunt.log.error(error);
+            return false;
+        }
+    });
+
+    grunt.registerTask('default', ['jshint', 'uglify', 'assert-version', 'qunit']);
 };
