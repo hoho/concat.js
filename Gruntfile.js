@@ -39,7 +39,6 @@ module.exports = function(grunt) {
 
         error = assertVersion({
             'concat.js': '',
-            'concat.min.js': '',
             'bower.json': ''
         });
 
