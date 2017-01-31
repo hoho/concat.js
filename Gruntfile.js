@@ -10,17 +10,17 @@ module.exports = function(grunt) {
 
         uglify: {
             options: {
-                preserveComments: 'some',
+                preserveComments: /^!/,
                 report: 'gzip'
             },
-            build: {
+            target: {
                 src: 'concat.js',
                 dest: 'concat.min.js'
             }
         },
 
         qunit: {
-            all: ['test/**/*.html']
+            target: ['test/**/*.html']
         }
     });
 
