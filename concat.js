@@ -1,13 +1,25 @@
 /*!
- * concat.js v0.9.5, https://github.com/hoho/concat.js
- * (c) 2013-2014 Marat Abdullin, MIT license
+ * concat.js v1.0.0, https://github.com/hoho/concat.js
+ * (c) 2013-2017 Marat Abdullin, MIT license
  */
-
-(function(window, undefined) {
+(function(factory, e, undef) {
+    if (typeof module === 'object' && typeof module.exports === 'object') {
+        e = factory(require, exports);
+        if (e !== undef) { module.exports = e; }
+    } else if (typeof define === 'function' && define.amd) {
+        define('concatjs', ['require', 'exports'], factory);
+    } else {
+        factory(undef, ((e = {})));
+        this.$C = e.$C;
+    }
+})(function(require, exports) {
+    'use strict';
     // This code is being optimized for size, so some parts of it could be
     // a bit hard to read. But it is quite short anyway.
-    var document = window.document,
-        tags = 'div|span|p|a|ul|ol|li|table|tr|td|th|br|img|b|i|s|u'.split('|'),
+
+    var undef = void 0,
+        doc = document,
+        tagShortcuts = 'div|span|p|a|ul|ol|li|table|tr|td|th|br|img|b|i|s|u'.split('|'),
         proto,
         i,
         curArgs = [],
@@ -15,20 +27,6 @@
         isFunction =
             function(func) {
                 return typeof func === 'function';
-            },
-
-        blockFunc =
-            function(prop, defaultValue) {
-                return function(arg) {
-                    var self = this,
-                        item = Item(self);
-
-                    item[prop] = arg === undefined ? defaultValue : arg;
-
-                    self.c = item;
-
-                    return self;
-                };
             },
 
         constr =
@@ -51,7 +49,7 @@
 
                 self._ = self.c = {
                     D: parent && {p: parent, r: replace},
-                    P: parent && ((self.d = direct)) ? parent : document.createDocumentFragment(),
+                    P: parent && ((self.d = direct)) ? parent : doc.createDocumentFragment(),
                     _: []
                 };
             },
@@ -66,7 +64,7 @@
                     keys,
                     position = -1;
 
-                if (item.E !== undefined) {
+                if (item.E !== undef) {
                     eachTarget = isFunction(item.E) ?
                         item.E.apply(item.A.P, curArgs)
                         :
@@ -84,16 +82,16 @@
                             }
                         }
 
-                        curArgs = [undefined, undefined, eachTarget];
+                        curArgs = [undef, undef, eachTarget];
 
                         R = function() {
                             curArgs[0] = eachTarget[(curArgs[1] = keys[++position])];
                             return position < keys.length;
                         };
                     }
-                } else if (item.R !== undefined) {
+                } else if (item.R !== undef) {
                     curArgs = [-1];
-                    eachTarget = undefined;
+                    eachTarget = undef;
 
                     R = function() {
                         return isFunction(item.R) ?
@@ -105,7 +103,7 @@
                     i = isFunction(item.T) ?
                         (item.T.apply(item.A.P, curArgs) ? 1 : 0)
                         :
-                        (item.T === undefined) || item.T ? 1 : 0;
+                        (item.T === undef) || item.T ? 1 : 0;
                 }
 
                 while ((!R && i--) || (R && R())) {
@@ -113,7 +111,9 @@
                         item.P = item.A.P;
                     }
 
-                    item.F && item.F();
+                    if (item.F) {
+                        item.F();
+                    }
 
                     for (j = 0; j < item._.length; j++) {
                         run(item._[j]);
@@ -135,6 +135,20 @@
                 self.c._.push(ret);
 
                 return ret;
+            },
+
+        blockFunc =
+            function(prop, defaultValue) {
+                return function(arg) {
+                    var self = this,
+                        item = Item(self);
+
+                    item[prop] = arg === undef ? defaultValue : arg;
+
+                    self.c = item;
+
+                    return self;
+                };
             };
 
     proto = constr.prototype;
@@ -144,7 +158,7 @@
             r,
             ret;
 
-        if (num === undefined) { num = 1; }
+        if (num === undef) { num = 1; }
 
         while (num > 0 && ((ret = self.c.e), (self.c = self.c.A))) {
             num--;
@@ -173,7 +187,7 @@
     proto.elem = function(name, attr, close) {
         var self = this,
             item = Item(self, function(elem/**/, a, prop, val, tmp, attrVal) {
-                elem = item.P = document.createElement(
+                elem = item.P = doc.createElement(
                     isFunction(name) ? name.apply(item.A.P, curArgs) : name
                 );
 
@@ -184,7 +198,7 @@
                         a = a.apply(elem, curArgs);
                     }
 
-                    if (a !== undefined) {
+                    if (a !== undef) {
                         if (i === 'style') {
                             if (typeof a === 'object') {
                                 val = [];
@@ -194,7 +208,7 @@
                                         tmp = tmp.apply(elem, curArgs);
                                     }
 
-                                    if (tmp !== undefined) {
+                                    if (tmp !== undef) {
                                         val.push(prop + ': ' + tmp);
                                     }
                                 }
@@ -218,7 +232,7 @@
 
         // attr argument is optional, if it strictly equals to true,
         // use it as close, when close is not passed.
-        return close || (close === undefined && attr === true) ?
+        return close || (close === undef && attr === true) ?
             self.end()
             :
             self;
@@ -228,7 +242,7 @@
         var self = this,
             item = Item(self, function(/**/parentElem) {
                 parentElem = item.A.P;
-                window.$C.mem[isFunction(key) ? key.apply(parentElem, curArgs) : key] =
+                exports.$C.mem[isFunction(key) ? key.apply(parentElem, curArgs) : key] =
                     isFunction(func) ? func.apply(parentElem, curArgs) : func || parentElem;
             });
 
@@ -240,8 +254,8 @@
     proto.test = blockFunc('T', false);
     proto.choose = function() {
         var self = this,
-            item = Item(self, function() { skip = undefined; }),
             skip,
+            item = Item(self, function() { skip = undef; }),
             choose = {},
             condFunc = function(isOtherwise/**/, val) {
                 return function(test) {
@@ -267,15 +281,15 @@
     };
 
     // Shortcuts for popular tags, to use .div() instead of .elem('div').
-    for (i = 0; i < tags.length; i++) {
-        proto[tags[i]] = (function(name) {
+    for (i = 0; i < tagShortcuts.length; i++) {
+        proto[tagShortcuts[i]] = (function(name) {
             return function(attr, close) {
                 return this.elem(name, attr, close);
             };
-        })(tags[i]);
+        })(tagShortcuts[i]);
     }
 
-    window.$C = i = function(parent, replace, direct) {
+    exports.$C = i = function(parent, replace, direct) {
         return new constr(parent, replace, direct);
     };
 
@@ -302,9 +316,9 @@
         text = args[0];
         text = isFunction(text) ? text.apply(this, curArgs) : text;
 
-        if (text !== undefined) {
+        if (text !== undef) {
             if (args[1]) {
-                el = document.createElement('p');
+                el = doc.createElement('p');
                 el.innerHTML = text;
                 el = el.firstChild;
                 while (el) {
@@ -314,7 +328,7 @@
                     el = text;
                 }
             } else {
-                this.appendChild(document.createTextNode(text));
+                this.appendChild(doc.createTextNode(text));
             }
         }
 
@@ -326,4 +340,4 @@
             isFunction((val = args[1])) ? val.call(self, item, index, arr) : val
         );
     });
-})(window);
+});

@@ -4,13 +4,8 @@ module.exports = function(grunt) {
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
 
-        jshint: {
-            all: {
-                src: ['concat.js', 'Gruntfile.js'],
-                options: {
-                    jshintrc: '.jshintrc'
-                }
-            }
+        eslint: {
+            target: ['concat.js', 'Gruntfile.js']
         },
 
         uglify: {
@@ -29,7 +24,7 @@ module.exports = function(grunt) {
         }
     });
 
-    grunt.loadNpmTasks('grunt-contrib-jshint');
+    grunt.loadNpmTasks('grunt-eslint');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-qunit');
 
@@ -48,5 +43,5 @@ module.exports = function(grunt) {
         }
     });
 
-    grunt.registerTask('default', ['jshint', 'uglify', 'assert-version', 'qunit']);
+    grunt.registerTask('default', ['eslint', 'uglify', 'assert-version', 'qunit']);
 };

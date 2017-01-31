@@ -4,11 +4,10 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <link rel="stylesheet" href="../node_modules/qunitjs/qunit/qunit.css">
     <script src="../node_modules/qunitjs/qunit/qunit.js"></script>
-    <script src="global.js"></script>
-    <script src="../concat.js"></script>
     <script src="test.js"></script>
+    <script src="amd.js"></script>
 </head>
-<body onload="allTests()">
+<body onload="amdLoadConcatJSAndRunTests(false)">
     <div id="qunit"></div>
     <div id="container"></div>
 </body>

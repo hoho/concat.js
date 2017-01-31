@@ -1,35 +1,34 @@
 {
-    "name": "concat.js",
-    "version": "0.9.5",
-    "description": "Chainable DOM Builder",
-    "main": "concat.js",
-    "directories": {
-        "test": "test"
-    },
-    "scripts": {
-        "test": "grunt"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git://github.com/hoho/concat.js.git"
-    },
-    "keywords": [
-        "DOM",
-        "builder"
-    ],
-    "author": "Marat Abdullin <dakota@brokenpipe.ru>",
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/hoho/concat.js/issues"
-    },
-    "dependencies": {
-    },
-    "devDependencies": {
-        "grunt": "~0.4.5",
-        "grunt-contrib-jshint": "~0.10.0",
-        "grunt-contrib-qunit": "~0.5.2",
-        "grunt-contrib-uglify": "~0.5.1",
-        "qunitjs": "~1.15.0",
-        "assert-version": "~0.0.1"
-    }
+  "name": "concat.js",
+  "version": "1.0.0",
+  "description": "Chainable DOM Builder",
+  "main": "concat.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "grunt"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/hoho/concat.js.git"
+  },
+  "keywords": [
+    "DOM",
+    "builder"
+  ],
+  "author": "Marat Abdullin <dakota@brokenpipe.ru>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hoho/concat.js/issues"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "assert-version": "~0.0.3",
+    "grunt": "~1.0.1",
+    "grunt-contrib-qunit": "~1.2.0",
+    "grunt-contrib-uglify": "~2.0.0",
+    "grunt-eslint": "~19.0.0",
+    "qunitjs": "~2.1.1"
+  }
 }
